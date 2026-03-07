@@ -20,6 +20,8 @@
 ├── 05_cc_pplx_debate.md           # CC × Perplexity 深度辩论 → 转向 MeshLex 方向
 ├── 06_plan_meshlex_validation.md  # MeshLex 可行性验证实验 plan
 ├── 07_impl_plan_meshlex_validation.md  # 14-Task 实现计划（已完成）
+├── 08_experiment_execution_design.md  # Phase A+B 实验执行设计
+├── 09_phase_ab_execution_plan.md      # Phase A+B 详细实施计划（6 Task）
 ├── material/                      # 10 篇核心论文的分析摘要
 └── paper/                         # 300+ 篇论文的 markdown 原文
 
@@ -33,11 +35,12 @@ src/                               # 核心代码
 └── evaluate.py                    # Evaluation metrics + Go/No-Go
 
 scripts/                           # 运行脚本
+├── download_shapenet.py           # 从 HuggingFace 下载 ShapeNet
 ├── train.py                       # 训练入口（支持 --resume）
 ├── evaluate.py                    # 评估入口
 ├── visualize.py                   # 可视化（t-SNE, utilization, curves）
 ├── init_codebook.py               # K-means codebook 初始化
-├── run_preprocessing.py           # 批量预处理 ShapeNet
+├── run_preprocessing.py           # 批量预处理 ShapeNet（含 train/test split）
 └── validate_task*.py              # 各 Task 验证脚本
 
 tests/                             # 17 unit tests
@@ -73,9 +76,11 @@ results/                           # 验证产出（commit 到 repo）
 
 ## Current Status
 
-**当前阶段**：验证实验代码实现已完成。14 个 Task 全部完成，17 个单元测试全部通过，各阶段真实数据验证产出已保存至 `results/`。
+**当前阶段**：验证实验代码实现已完成（14 Task + 17 tests）。正在执行 Phase A+B（ShapeNet 数据准备 + 快速训练验证）。
 
-下一步：在完整 ShapeNet 数据上运行端到端训练+评估流程（参见 `RUN_GUIDE.md`），做出 Go/No-Go 决策。
+- 代码实现：全部完成（src/ + scripts/ + tests/）
+- ShapeNet 下载脚本：已就绪，等待 HuggingFace 数据集审批
+- 下一步：下载数据 → 预处理 → Encoder-Only 20 epochs → K-means init → VQ-VAE 快速验证 → Go/No-Go
 
 ## Conventions
 

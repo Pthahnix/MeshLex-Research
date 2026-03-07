@@ -26,12 +26,14 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 | 5 | `05_cc_pplx_debate.md` | Paradigm shift: from "better serialization" to "should we serialize at all?" → MeshLex |
 | 6 | `06_plan_meshlex_validation.md` | Validation experiment plan for MeshLex feasibility |
 | 7 | `07_impl_plan_meshlex_validation.md` | 14-Task implementation plan (completed) |
+| 8 | `08_experiment_execution_design.md` | Phase A+B experiment execution design |
+| 9 | `09_phase_ab_execution_plan.md` | Phase A+B detailed execution plan (6 tasks) |
 
 ## Current Status
 
-**Phase: Validation experiment code complete. Ready for full-scale training.**
+**Phase: Executing validation experiment (Phase A+B).**
 
-All 14 implementation tasks are complete with 17 unit tests passing. The pipeline is ready for end-to-end training on ShapeNet data. See [`RUN_GUIDE.md`](RUN_GUIDE.md) for the complete operational guide from data preparation to Go/No-Go decision.
+All 14 implementation tasks are complete with 17 unit tests passing. Currently executing the experiment: downloading ShapeNet data from HuggingFace, preprocessing, and quick training validation. See [`RUN_GUIDE.md`](RUN_GUIDE.md) for the complete operational guide from data preparation to Go/No-Go decision.
 
 ## Pipeline
 
@@ -58,7 +60,8 @@ src/                               # Core modules
 └── evaluate.py                    # Evaluation metrics + Go/No-Go decision
 
 scripts/                           # CLI entry points
-├── run_preprocessing.py           # Batch preprocess ShapeNet
+├── download_shapenet.py           # Download ShapeNet from HuggingFace
+├── run_preprocessing.py           # Batch preprocess ShapeNet (with train/test split)
 ├── train.py                       # Training (supports --resume)
 ├── init_codebook.py               # K-means codebook initialization
 ├── evaluate.py                    # Same-cat / cross-cat evaluation
@@ -80,7 +83,7 @@ results/                           # Validation outputs (committed)
 └── task13_validation/             # K-means init
 
 .context/                          # Research documents (chronological)
-├── 00-07_*.md                     # Research evolution documents
+├── 00-09_*.md                     # Research evolution documents
 ├── material/                      # Analysis summaries of key papers
 └── paper/                         # [gitignored] 300+ paper markdown files
 ```
