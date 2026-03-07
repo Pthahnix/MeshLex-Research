@@ -1,0 +1,28 @@
+{
+  "encoder": {
+    "output_shape": [
+      20,
+      128
+    ],
+    "z_mean": 0.28442683815956116,
+    "z_std": 0.5207194685935974
+  },
+  "codebook": {
+    "K": 64,
+    "unique_used": 1,
+    "utilization": 0.015625
+  },
+  "decoder": {
+    "output_shape": [
+      20,
+      60,
+      3
+    ]
+  },
+  "pipeline": {
+    "recon_loss": 0.04781249538064003,
+    "commit_loss": 0.310251921415329,
+    "embed_loss": 0.310251921415329,
+    "total_loss": 0.43562740087509155
+  }
+}
