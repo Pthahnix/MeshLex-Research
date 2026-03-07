@@ -37,6 +37,10 @@ def load_and_preprocess_mesh(
     if mesh.faces.shape[0] < min_faces:
         return None
 
+    # Skip meshes where decimation failed (e.g. non-manifold Objaverse GLBs)
+    if mesh.faces.shape[0] > target_faces * 5:
+        return None
+
     # Normalize: center at origin, scale to [-1, 1]
     centroid = mesh.vertices.mean(axis=0)
     mesh.vertices -= centroid
