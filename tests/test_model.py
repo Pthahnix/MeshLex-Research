@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch_geometric.data import Data, Batch
 
-from src.model import PatchEncoder, SimVQCodebook, PatchDecoder
+from src.model import PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE
 
 
 # ── Encoder Tests ────────────────────────────────────────────────────────────
@@ -92,3 +92,33 @@ def test_decoder_masked_output():
     out = decoder(z, n_vertices)
     assert torch.allclose(out[0, 10:], torch.zeros(50, 3))
     assert torch.allclose(out[1, 15:], torch.zeros(45, 3))
+
+
+# ── VQ-VAE End-to-End Tests ─────────────────────────────────────────────────
+
+def test_vqvae_forward():
+    """Full forward pass: graph input → reconstructed vertices + losses."""
+    model = MeshLexVQVAE(codebook_size=64, embed_dim=128)
+    graphs = []
+    n_verts_list = []
+    for _ in range(4):
+        nf = 30
+        nv = 20
+        x = torch.randn(nf, 15)
+        ei = torch.stack([torch.randint(0, nf, (60,)), torch.randint(0, nf, (60,))])
+        graphs.append(Data(x=x, edge_index=ei))
+        n_verts_list.append(nv)
+
+    batch = Batch.from_data_list(graphs)
+    n_vertices = torch.tensor(n_verts_list)
+    gt_vertices = torch.randn(4, 60, 3)
+
+    result = model(batch.x, batch.edge_index, batch.batch, n_vertices, gt_vertices)
+
+    assert "recon_vertices" in result
+    assert "total_loss" in result
+    assert "recon_loss" in result
+    assert "commit_loss" in result
+    assert "indices" in result
+    assert result["recon_vertices"].shape == (4, 60, 3)
+    assert result["total_loss"].requires_grad

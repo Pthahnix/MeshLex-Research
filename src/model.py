@@ -159,3 +159,71 @@ class PatchDecoder(nn.Module):
         coords = coords * mask.unsqueeze(-1).float()
 
         return coords
+
+
+class MeshLexVQVAE(nn.Module):
+    """Full MeshLex VQ-VAE: Encoder → SimVQ → Decoder.
+
+    Combines PatchEncoder, SimVQCodebook, PatchDecoder into end-to-end model.
+    """
+
+    def __init__(
+        self,
+        in_dim: int = 15,
+        hidden_dim: int = 256,
+        embed_dim: int = 128,
+        codebook_size: int = 4096,
+        max_vertices: int = 60,
+        lambda_commit: float = 0.25,
+        lambda_embed: float = 1.0,
+    ):
+        super().__init__()
+        self.encoder = PatchEncoder(in_dim, hidden_dim, embed_dim)
+        self.codebook = SimVQCodebook(codebook_size, embed_dim)
+        self.decoder = PatchDecoder(embed_dim, max_vertices)
+        self.max_vertices = max_vertices
+        self.lambda_commit = lambda_commit
+        self.lambda_embed = lambda_embed
+
+    def forward(self, x, edge_index, batch, n_vertices, gt_vertices):
+        """
+        Args:
+            x: (N_total, in_dim) face features
+            edge_index: (2, E_total) face adjacency
+            batch: (N_total,) batch vector
+            n_vertices: (B,) actual vertex count per patch
+            gt_vertices: (B, max_V, 3) ground truth local vertices (padded)
+        Returns:
+            dict with recon_vertices, total_loss, recon_loss, commit_loss, embed_loss, indices
+        """
+        from src.losses import chamfer_distance
+
+        # Encode
+        z = self.encoder(x, edge_index, batch)  # (B, embed_dim)
+
+        # Quantize
+        z_q, indices = self.codebook(z)  # (B, embed_dim), (B,)
+
+        # Decode
+        recon = self.decoder(z_q, n_vertices)  # (B, max_V, 3)
+
+        # Losses
+        mask = torch.arange(self.max_vertices, device=x.device).unsqueeze(0) < n_vertices.unsqueeze(1)
+        recon_loss = chamfer_distance(recon, gt_vertices, mask)
+        commit_loss, embed_loss = self.codebook.compute_loss(z, z_q, indices)
+
+        total_loss = recon_loss + self.lambda_commit * commit_loss + self.lambda_embed * embed_loss
+
+        return {
+            "recon_vertices": recon,
+            "total_loss": total_loss,
+            "recon_loss": recon_loss,
+            "commit_loss": commit_loss,
+            "embed_loss": embed_loss,
+            "indices": indices,
+            "z": z,
+        }
+
+    def encode_only(self, x, edge_index, batch):
+        """Encode patches without decoding (for codebook init and eval)."""
+        return self.encoder(x, edge_index, batch)
