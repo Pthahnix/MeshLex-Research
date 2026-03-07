@@ -21,7 +21,9 @@
 ├── 06_plan_meshlex_validation.md  # MeshLex 可行性验证实验 plan
 ├── 07_impl_plan_meshlex_validation.md  # 14-Task 实现计划（已完成）
 ├── 08_experiment_execution_design.md  # Phase A+B 实验执行设计
-├── 09_phase_ab_execution_plan.md      # Phase A+B 详细实施计划（6 Task）
+├── 09_phase_ab_execution_plan.md      # [legacy] Phase A+B ShapeNet 实施计划（6 Task）
+├── 10_objaverse_migration_design.md   # Objaverse 迁移 + 双实验设计
+├── 11_objaverse_experiment_plan.md    # Objaverse 双实验实施计划（12 Task）
 ├── material/                      # 10 篇核心论文的分析摘要
 └── paper/                         # 300+ 篇论文的 markdown 原文
 
@@ -35,12 +37,13 @@ src/                               # 核心代码
 └── evaluate.py                    # Evaluation metrics + Go/No-Go
 
 scripts/                           # 运行脚本
-├── download_shapenet.py           # 从 HuggingFace 下载 ShapeNet
+├── download_objaverse.py          # 从 Objaverse-LVIS 下载（5cat / lvis_wide 模式）
+├── download_shapenet.py           # [legacy] 从 HuggingFace 下载 ShapeNet
 ├── train.py                       # 训练入口（支持 --resume）
 ├── evaluate.py                    # 评估入口
 ├── visualize.py                   # 可视化（t-SNE, utilization, curves）
 ├── init_codebook.py               # K-means codebook 初始化
-├── run_preprocessing.py           # 批量预处理 ShapeNet（含 train/test split）
+├── run_preprocessing.py           # 批量预处理（支持 manifest JSON 输入 + ShapeNet 目录）
 └── validate_task*.py              # 各 Task 验证脚本
 
 tests/                             # 17 unit tests
@@ -76,17 +79,21 @@ results/                           # 验证产出（commit 到 repo）
 
 ## Current Status
 
-**当前阶段**：验证实验代码实现已完成（14 Task + 17 tests）。正在执行 Phase A+B（ShapeNet 数据准备 + 快速训练验证）。
+**当前阶段**：数据源从 ShapeNet 切换到 Objaverse-LVIS（ShapeNet 审批未通过）。准备执行双实验验证。
 
-- 代码实现：全部完成（src/ + scripts/ + tests/）
-- ShapeNet 下载脚本：已就绪，等待 HuggingFace 数据集审批
-- 下一步：下载数据 → 预处理 → Encoder-Only 20 epochs → K-means init → VQ-VAE 快速验证 → Go/No-Go
+- 代码实现：全部完成（src/ + scripts/ + tests/，17 tests passing）
+- 数据源：Objaverse-LVIS（46K objects, 1156 categories，无需审批）
+- 实验设计：双实验（`context/10_objaverse_migration_design.md`）
+  - 实验 1：5-Category（chair/table/airplane 训练，car/lamp 跨类别测试）
+  - 实验 2：LVIS-Wide（500+ 类别广覆盖 universality 验证）
+- 实施计划：`context/11_objaverse_experiment_plan.md`（12 Tasks）
+- 下一步：Task 1 创建 Objaverse 下载脚本 → Task 2 适配预处理脚本 → 执行实验
 
 ## Conventions
 
 - 文档语言：中英混合（技术术语英文，说明中文）
 - 文档编号：两位数 ID，按时间顺序递增
-- 所有研究文档保存在 `.context/` 下
+- 所有研究文档保存在 `context/` 下
 
 ## Git Workflow — 重要
 

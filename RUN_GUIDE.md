@@ -1,6 +1,9 @@
 # MeshLex Validation Experiment — End-to-End Run Guide
 
-本文档记录从原始 ShapeNet 数据到最终 Go/No-Go 决策的完整运行流程。
+本文档记录从 Objaverse-LVIS 数据到最终 Go/No-Go 决策的完整运行流程。
+
+数据源：**Objaverse-LVIS**（46K objects, 1156 categories，无需审批）
+实验方案：双实验（5-Category + LVIS-Wide），详见 `context/10_objaverse_migration_design.md`
 
 ---
 
@@ -9,6 +12,7 @@
 ```bash
 # Python 3.11+, CUDA 12.x
 pip install -r requirements.txt
+pip install objaverse
 pip install torch-geometric
 pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv \
     -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
@@ -16,41 +20,41 @@ pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv \
 
 ---
 
-## Phase A: Data Preparation
+## Experiment 1: 5-Category
 
-### 1. 获取 ShapeNet Core v2
+### Phase A1: Data Preparation
 
-将 ShapeNet Core v2 放置在 `data/ShapeNetCore.v2/`，需要以下 5 个类别：
+#### 1. 下载 5 类 Objaverse-LVIS 数据
 
-| Category | ShapeNet ID | Role |
-|----------|-------------|------|
-| Chair | 03001627 | Training |
-| Table | 04379243 | Training |
-| Airplane | 02691156 | Training |
-| Car | 02958343 | Cross-category Test |
-| Lamp | 03636649 | Cross-category Test |
+```bash
+python scripts/download_objaverse.py --mode 5cat --output_dir data/objaverse
+```
 
-### 2. Preprocess: 降面 + 归一化 + Patch 分割
+产出：`data/objaverse/5cat/manifest.json`（~847 objects: chair 453, table 101, airplane 112, car 102, lamp 79）
+
+#### 2. 预处理：降面 + 归一化 + Patch 分割
 
 ```bash
 python scripts/run_preprocessing.py \
-    --shapenet_root data/ShapeNetCore.v2 \
+    --input_manifest data/objaverse/5cat/manifest.json \
+    --experiment_name 5cat \
     --output_root data \
-    --target_faces 1000 \
-    --max_per_category 500
+    --target_faces 1000
 ```
 
 产出：
-- `data/meshes/{category}/` — 预处理后的 OBJ 文件
-- `data/patches/{category}/` — 每个 patch 的 NPZ 文件
-- `data/patch_metadata.json` — 元数据
+- `data/meshes/5cat/{category}/` — 预处理后的 OBJ 文件
+- `data/patches/5cat/{category}_train/` — 训练 patches（chair/table/airplane）
+- `data/patches/5cat/{category}_test/` — 测试 patches（chair/table/airplane）
+- `data/patches/5cat/{car,lamp}/` — 跨类别测试 patches
+- `data/patch_metadata_5cat.json`
 
-### 3. 验证 patch 统计
+#### 3. 验证 patch 统计
 
 ```bash
 python -c "
 import json, numpy as np
-meta = json.load(open('data/patch_metadata.json'))
+meta = json.load(open('data/patch_metadata_5cat.json'))
 cats = {}
 for m in meta:
     c = m['category']
@@ -61,101 +65,146 @@ for c, patches in sorted(cats.items()):
 "
 ```
 
-预期：每个类别 ~400-500 meshes，每个 mesh ~28 patches（1000 faces / 35 faces per patch）。
-
----
-
-## Phase B: Train Encoder-Only (Epochs 0-19)
-
-先只训练 encoder + decoder（不启用 VQ loss），让 encoder 学到有意义的 embedding。
+### Phase B1: Encoder-Only Training (20 Epochs)
 
 ```bash
 python scripts/train.py \
-    --train_dirs data/patches/chair data/patches/table data/patches/airplane \
+    --train_dirs data/patches/5cat/chair_train data/patches/5cat/table_train data/patches/5cat/airplane_train \
+    --val_dirs data/patches/5cat/chair_test data/patches/5cat/table_test data/patches/5cat/airplane_test \
     --epochs 20 \
     --batch_size 256 \
     --lr 1e-4 \
     --vq_start_epoch 999 \
-    --checkpoint_dir data/checkpoints
+    --checkpoint_dir data/checkpoints/5cat
 ```
 
 > `vq_start_epoch=999` 表示这 20 epochs 内不启用 VQ loss。
 
----
-
-## Phase C: K-means Codebook Initialization
-
-用训练好的 encoder 输出做 K-means，初始化 codebook（VQGAN-LC 策略，避免 codebook collapse）。
+### Phase C1: K-means Codebook Initialization
 
 ```bash
 python scripts/init_codebook.py \
-    --checkpoint data/checkpoints/checkpoint_epoch019.pt \
-    --patch_dirs data/patches/chair data/patches/table data/patches/airplane \
+    --checkpoint data/checkpoints/5cat/checkpoint_epoch019.pt \
+    --patch_dirs data/patches/5cat/chair_train data/patches/5cat/table_train data/patches/5cat/airplane_train \
     --codebook_size 4096 \
-    --output data/checkpoints/checkpoint_kmeans_init.pt
+    --output data/checkpoints/5cat/checkpoint_kmeans_init.pt
 ```
 
----
-
-## Phase D: Full VQ-VAE Training (Epochs 0-200)
-
-从 K-means 初始化的 checkpoint 恢复，启用完整 VQ loss。
+### Phase D1: Quick VQ-VAE Training (20 Epochs)
 
 ```bash
 python scripts/train.py \
-    --train_dirs data/patches/chair data/patches/table data/patches/airplane \
-    --resume data/checkpoints/checkpoint_kmeans_init.pt \
-    --epochs 200 \
+    --train_dirs data/patches/5cat/chair_train data/patches/5cat/table_train data/patches/5cat/airplane_train \
+    --val_dirs data/patches/5cat/chair_test data/patches/5cat/table_test data/patches/5cat/airplane_test \
+    --resume data/checkpoints/5cat/checkpoint_kmeans_init.pt \
+    --epochs 20 \
     --batch_size 256 \
     --lr 1e-4 \
     --vq_start_epoch 0 \
-    --checkpoint_dir data/checkpoints
+    --checkpoint_dir data/checkpoints/5cat_vq
 ```
 
-监控要点：
-- `recon_loss` 应持续下降
-- `codebook_utilization` 应在 50%+ 以上（低于 30% 说明 collapse）
+监控：`recon_loss` 下降，`codebook_utilization` > 30%。
 
----
-
-## Phase E: Evaluate
-
-### Same-category test (训练类别的 held-out patches)
-
-需要预先将 chair/table/airplane 的 patches 按 mesh_id 划分为 train/test。
-
-### Cross-category test (Car + Lamp — 训练时从未见过)
+### Phase E1: Evaluate + Visualize
 
 ```bash
 python scripts/evaluate.py \
-    --checkpoint data/checkpoints/checkpoint_final.pt \
-    --same_cat_dirs data/patches/chair_test data/patches/table_test data/patches/airplane_test \
-    --cross_cat_dirs data/patches/car data/patches/lamp \
-    --output results/eval_results.json
+    --checkpoint data/checkpoints/5cat_vq/checkpoint_final.pt \
+    --same_cat_dirs data/patches/5cat/chair_test data/patches/5cat/table_test data/patches/5cat/airplane_test \
+    --cross_cat_dirs data/patches/5cat/car data/patches/5cat/lamp \
+    --output results/exp1_eval.json
+
+python scripts/visualize.py \
+    --checkpoint data/checkpoints/5cat_vq/checkpoint_final.pt \
+    --history data/checkpoints/5cat_vq/training_history.json \
+    --patch_dirs data/patches/5cat/chair_train data/patches/5cat/table_train data/patches/5cat/airplane_train \
+    --output_dir results/exp1_plots
 ```
 
 ---
 
-## Phase F: Visualize
+## Experiment 2: LVIS-Wide
+
+### Phase A2: Data Preparation
+
+#### 1. 下载 LVIS 广采样数据
 
 ```bash
-python scripts/visualize.py \
-    --checkpoint data/checkpoints/checkpoint_final.pt \
-    --history data/checkpoints/training_history.json \
-    --patch_dirs data/patches/chair data/patches/table data/patches/airplane \
-    --output_dir results/plots
+python scripts/download_objaverse.py \
+    --mode lvis_wide \
+    --output_dir data/objaverse \
+    --min_per_cat 10 \
+    --max_per_cat 10
+```
+
+产出：`data/objaverse/lvis_wide/manifest.json`（~500+ 类别，~3000-5000 objects）
+
+#### 2. 预处理（category-holdout split）
+
+```bash
+python scripts/run_preprocessing.py \
+    --input_manifest data/objaverse/lvis_wide/manifest.json \
+    --experiment_name lvis_wide \
+    --output_root data \
+    --target_faces 1000 \
+    --split_mode category_holdout \
+    --holdout_categories 50 \
+    --seed 42
 ```
 
 产出：
-- `results/plots/training_curves.png` — Loss + Utilization 曲线
-- `results/plots/codebook_tsne.png` — Codebook embedding 的 t-SNE 可视化
-- `results/plots/utilization_histogram.png` — Code 使用频率分布
+- `data/patches/lvis_wide/seen_train/` — 训练 patches
+- `data/patches/lvis_wide/seen_test/` — seen 类别测试 patches
+- `data/patches/lvis_wide/unseen/` — 50 个 unseen 类别 patches
+
+### Phase B2-D2: Training
+
+```bash
+# Encoder-Only
+python scripts/train.py \
+    --train_dirs data/patches/lvis_wide/seen_train \
+    --val_dirs data/patches/lvis_wide/seen_test \
+    --epochs 20 --batch_size 256 --lr 1e-4 \
+    --vq_start_epoch 999 --checkpoint_dir data/checkpoints/lvis_wide
+
+# K-means Init
+python scripts/init_codebook.py \
+    --checkpoint data/checkpoints/lvis_wide/checkpoint_epoch019.pt \
+    --patch_dirs data/patches/lvis_wide/seen_train \
+    --codebook_size 4096 \
+    --output data/checkpoints/lvis_wide/checkpoint_kmeans_init.pt
+
+# VQ-VAE
+python scripts/train.py \
+    --train_dirs data/patches/lvis_wide/seen_train \
+    --val_dirs data/patches/lvis_wide/seen_test \
+    --resume data/checkpoints/lvis_wide/checkpoint_kmeans_init.pt \
+    --epochs 20 --batch_size 256 --lr 1e-4 \
+    --vq_start_epoch 0 --checkpoint_dir data/checkpoints/lvis_wide_vq
+```
+
+### Phase E2: Evaluate + Visualize
+
+```bash
+python scripts/evaluate.py \
+    --checkpoint data/checkpoints/lvis_wide_vq/checkpoint_final.pt \
+    --same_cat_dirs data/patches/lvis_wide/seen_test \
+    --cross_cat_dirs data/patches/lvis_wide/unseen \
+    --output results/exp2_eval.json
+
+python scripts/visualize.py \
+    --checkpoint data/checkpoints/lvis_wide_vq/checkpoint_final.pt \
+    --history data/checkpoints/lvis_wide_vq/training_history.json \
+    --patch_dirs data/patches/lvis_wide/seen_train \
+    --output_dir results/exp2_plots
+```
 
 ---
 
-## Phase G: Go/No-Go Decision
+## Go/No-Go Decision
 
-读取 `results/eval_results.json`，按以下矩阵做决策：
+综合两组实验，按以下矩阵决策：
 
 | Cross/Same CD Ratio | Utilization | Decision | Action |
 |---------------------|-------------|----------|--------|
@@ -165,46 +214,52 @@ python scripts/visualize.py \
 | 2.0x - 3.0x | any | **HOLD** | 分析失败原因 |
 | > 3.0x | any | **NO-GO** | 核心假设被推翻，pivot |
 
+实验 2 额外关注：unseen 50 categories 的 CD 是否和 seen categories 接近。
+
 ---
 
-## Project File Structure
+## Full Training (Phase F, Go 后执行)
 
+选表现好的实验组，训练 200 epochs：
+
+```bash
+python scripts/train.py \
+    --train_dirs <best_experiment_train_dirs> \
+    --val_dirs <best_experiment_val_dirs> \
+    --resume <best_experiment_kmeans_checkpoint> \
+    --epochs 200 \
+    --batch_size 256 \
+    --lr 1e-4 \
+    --vq_start_epoch 0 \
+    --checkpoint_dir data/checkpoints/<experiment>_full
 ```
-src/
-├── data_prep.py          # Mesh 加载、降面、归一化
-├── patch_segment.py      # METIS Patch 分割 + PCA 归一化
-├── patch_dataset.py      # NPZ 序列化 + PyTorch/PyG Dataset
-├── model.py              # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE
-├── losses.py             # Chamfer Distance loss
-├── trainer.py            # Training loop
-└── evaluate.py           # Evaluation metrics + Go/No-Go
 
-scripts/
-├── run_preprocessing.py  # 批量预处理 ShapeNet
-├── train.py              # 训练入口 (支持 --resume)
-├── init_codebook.py      # K-means codebook 初始化
-├── evaluate.py           # 评估入口
-└── visualize.py          # 可视化入口
+---
 
-tests/
-├── test_data_prep.py     # 2 tests
-├── test_patch_segment.py # 4 tests
-├── test_patch_dataset.py # 3 tests
-└── test_model.py         # 8 tests
-```
+## Disk Budget
+
+| 阶段 | 实验 1 | 实验 2 | 合计 |
+|------|--------|--------|------|
+| GLB 下载 | ~2GB | ~10GB | ~12GB |
+| 预处理 OBJ | ~500MB | ~2GB | ~2.5GB |
+| Patches NPZ | ~500MB | ~2GB | ~2.5GB |
+| Checkpoints | ~500MB | ~500MB | ~1GB |
+| **Total** | **~3.5GB** | **~14.5GB** | **~18GB** |
+
+可用磁盘 60GB，安全余量充足。
 
 ---
 
 ## Estimated Time
 
-| Phase | Time (estimated) |
-|-------|-----------------|
-| A: Data Prep | ~3h (download + preprocess) |
-| B: Encoder-Only | ~2h (20 epochs) |
-| C: K-means Init | ~10min |
-| D: Full Training | ~6h (200 epochs) |
-| E: Evaluate | ~30min |
-| F: Visualize | ~10min |
-| **Total** | **~12h** |
+| Phase | Exp 1 (5-cat) | Exp 2 (LVIS-wide) |
+|-------|---------------|-------------------|
+| Data Prep | ~30min | ~2h |
+| Encoder-Only 20ep | ~1h | ~2h |
+| K-means Init | ~5min | ~10min |
+| VQ-VAE 20ep | ~30min | ~1h |
+| Evaluate + Visualize | ~15min | ~30min |
+| **Subtotal** | **~2.5h** | **~5.5h** |
+| Full 200ep (if Go) | ~6h | ~10h |
 
-GPU 要求：单卡 RTX 3090 / A100 即可。CPU 训练可行但极慢。
+GPU：RTX 4090 24GB。
