@@ -1,0 +1,14 @@
+# Claude Code runtime (can be reinstalled)
+.claude/
+.claude.json
+
+# System profile files
+.bash_logout
+.bashrc
+.profile
+.cache/
+.local/
+
+# Paper corpus - 300+ markdown files, 33MB, can be regenerated
+# Only the research documents (00-06) and material/ analysis are original work
+.context/paper/
