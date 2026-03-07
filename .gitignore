@@ -12,3 +12,12 @@
 # Paper corpus - 300+ markdown files, 33MB, can be regenerated
 # Only the research documents (00-06) and material/ analysis are original work
 .context/paper/
+
+# Data and results (large files, generated)
+data/
+results/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
