@@ -51,6 +51,6 @@
 
 ## Git Workflow — 重要
 
-- **尽可能频繁 commit**：完成任何一小部分内容、一段测试、一个实验结果，都要立即 commit
+- **频繁 commit**：完成一个完整功能模块（多个函数组成的功能）、通过一组相关测试、完成一个实验阶段，就立即 commit
 - **不要 push**：push 由用户亲自操作，Claude 不执行 `git push`
-- commit 粒度越细越好：一个函数写完 commit、一个测试通过 commit、一个可视化生成 commit
+- commit 粒度：以"功能"为单位，而非单个函数。例如：patch 分割模块写完+测试通过 = 一次 commit
