@@ -109,7 +109,7 @@ class PatchDecoder(nn.Module):
     with masking for variable vertex counts.
     """
 
-    def __init__(self, embed_dim: int = 128, max_vertices: int = 60):
+    def __init__(self, embed_dim: int = 128, max_vertices: int = 128):
         super().__init__()
         self.max_vertices = max_vertices
 
@@ -173,7 +173,7 @@ class MeshLexVQVAE(nn.Module):
         hidden_dim: int = 256,
         embed_dim: int = 128,
         codebook_size: int = 4096,
-        max_vertices: int = 60,
+        max_vertices: int = 128,
         lambda_commit: float = 0.25,
         lambda_embed: float = 1.0,
     ):

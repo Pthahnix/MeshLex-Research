@@ -109,7 +109,7 @@ class PatchDataset(Dataset):
     """PyTorch Dataset that loads .npz patch files."""
 
     MAX_FACES = 80
-    MAX_VERTICES = 60
+    MAX_VERTICES = 128
 
     def __init__(self, patch_dir: str):
         self.patch_dir = Path(patch_dir)
@@ -153,7 +153,7 @@ class PatchGraphDataset(Dataset):
     with graph structure for SAGEConv + padded vertex targets for decoder.
     """
 
-    MAX_VERTICES = 60
+    MAX_VERTICES = 128
 
     def __init__(self, patch_dir: str):
         self.patch_dir = Path(patch_dir)
