@@ -67,7 +67,11 @@ def preprocess_shapenet_category(
     obj_files = sorted(cat_path.rglob("*.obj"))[:max_meshes]
 
     for obj_file in obj_files:
-        mesh_id = obj_file.parent.name  # ShapeNet: category/model_id/model.obj
+        # ShapeNet: .../model_id/models/model_normalized.obj → parent.parent.name
+        if obj_file.parent.name == "models":
+            mesh_id = obj_file.parent.parent.name
+        else:
+            mesh_id = obj_file.parent.name
         mesh = load_and_preprocess_mesh(str(obj_file), target_faces=target_faces)
         if mesh is None:
             continue
