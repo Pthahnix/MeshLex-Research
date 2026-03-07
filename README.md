@@ -118,4 +118,4 @@ CCF-A conferences: CVPR / NeurIPS / ICCV
 
 ## License
 
-Research use only. Not yet published.
+Apache-2.0
