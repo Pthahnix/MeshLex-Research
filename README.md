@@ -14,21 +14,6 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 
 > Mesh local topology is low-entropy and universal across object categories. A finite codebook of ~4096 topology prototypes, combined with continuous deformation parameters, can reconstruct arbitrary meshes with high fidelity.
 
-## Research Evolution
-
-| Stage | Document | Summary |
-|-------|----------|---------|
-| 0 | `00_original_prompt.md` | Initial vision: Large Mesh Model (LMM) for unified reconstruction + generation |
-| 1 | `01_gap_analysis_lmm.md` | 75+ paper survey, 7 research gaps identified |
-| 2 | `02_idea_generation_lmm.md` | 5 candidate ideas → MeshFoundation v2 selected |
-| 3 | `03_experiment_design_lmm.md` | Full experiment design for MeshFoundation v2 |
-| 4 | `04_pplx_comprehensive_evaluation.md` | Independent review (Gap 88% accuracy, Idea 78/100, Exp 82/100) |
-| 5 | `05_cc_pplx_debate.md` | Paradigm shift: from "better serialization" to "should we serialize at all?" → MeshLex |
-| 6 | `06_plan_meshlex_validation.md` | Validation experiment plan for MeshLex feasibility |
-| 7 | `07_impl_plan_meshlex_validation.md` | 14-Task implementation plan (completed) |
-| 8 | `08_experiment_execution_design.md` | Phase A+B experiment execution design |
-| 9 | `09_phase_ab_execution_plan.md` | Phase A+B detailed execution plan (6 tasks) |
-
 ## Current Status
 
 **Phase: Executing validation experiment (Phase A+B).**
