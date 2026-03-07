@@ -13,9 +13,10 @@
 # Only the research documents (00-06) and material/ analysis are original work
 .context/paper/
 
-# Data and results (large files, generated)
+# Data (large files, can be regenerated)
 data/
-results/
+
+# Results: validation outputs tracked for user review
 
 # Python
 __pycache__/
