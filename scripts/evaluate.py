@@ -45,9 +45,14 @@ def main():
     print(f"Cross-cat CD: {cross_results['mean_cd']:.4f} (x10^3)")
 
     # Go/No-Go
-    decision = compute_go_nogo(same_results["mean_cd"], cross_results["mean_cd"])
+    # Use same-cat utilization for Go/No-Go (more conservative)
+    decision = compute_go_nogo(
+        same_results["mean_cd"], cross_results["mean_cd"],
+        utilization=same_results["utilization"],
+    )
     print(f"\n{'='*50}")
     print(f"CD Ratio (cross/same): {decision['ratio']:.2f}x")
+    print(f"Codebook Utilization: {same_results['utilization']:.1%} ({same_results['n_unique_codes']}/{same_results['total_codes']})")
     print(f"Decision: {decision['decision']}")
     print(f"Next step: {decision['next_step']}")
     print(f"{'='*50}")
