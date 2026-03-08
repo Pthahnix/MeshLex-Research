@@ -54,16 +54,17 @@ def plot_utilization_histogram(code_counts: Counter, K: int, save_path: str):
 
 
 def plot_codebook_tsne(model, save_path: str):
-    """t-SNE of codebook embeddings."""
+    """t-SNE of effective codebook embeddings (CW, not raw C)."""
     from sklearn.manifold import TSNE
 
-    embeddings = model.codebook.codebook.weight.detach().cpu().numpy()  # (K, dim)
+    # Use CW (transformed codebook) — this is what the model actually uses
+    embeddings = model.codebook.get_quant_codebook().detach().cpu().numpy()  # (K, dim)
     tsne = TSNE(n_components=2, perplexity=min(30, embeddings.shape[0] - 1), random_state=42)
     coords = tsne.fit_transform(embeddings)
 
     plt.figure(figsize=(10, 10))
     plt.scatter(coords[:, 0], coords[:, 1], s=4, alpha=0.6, c="steelblue")
-    plt.title(f"Codebook t-SNE (K={embeddings.shape[0]})")
+    plt.title(f"Codebook t-SNE (CW space, K={embeddings.shape[0]})")
     plt.xlabel("t-SNE 1")
     plt.ylabel("t-SNE 2")
     plt.tight_layout()
