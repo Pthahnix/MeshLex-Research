@@ -14,11 +14,17 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 
 > Mesh local topology is low-entropy and universal across object categories. A finite codebook of ~4096 topology prototypes, combined with continuous deformation parameters, can reconstruct arbitrary meshes with high fidelity.
 
+## Timeline
+
+- **Day 1 (2026-03-06)**: Project inception, gap analysis, idea generation, experiment design
+- **Day 2 (2026-03-07)**: Full codebase implementation (14 tasks), unit tests, initial experiment
+- **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, re-running experiments
+
 ## Current Status
 
-**Phase: Executing validation experiment (Phase A+B).**
+**Phase: A-stage collapse fix — retraining with corrected SimVQ.**
 
-All 14 implementation tasks are complete with 17 unit tests passing. Currently executing the experiment: downloading ShapeNet data from HuggingFace, preprocessing, and quick training validation. See [`RUN_GUIDE.md`](RUN_GUIDE.md) for the complete operational guide from data preparation to Go/No-Go decision.
+Fixed 3 critical SimVQ implementation bugs (frozen C, CW distance, CW quantization). Simplified training pipeline (removed staged VQ, added LR warmup + dead code revival). Currently running 5-Category experiment with 200 epochs on Objaverse-LVIS data.
 
 ## Pipeline
 
