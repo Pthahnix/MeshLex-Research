@@ -18,13 +18,21 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 
 - **Day 1 (2026-03-06)**: Project inception, gap analysis, idea generation, experiment design
 - **Day 2 (2026-03-07)**: Full codebase implementation (14 tasks), unit tests, initial experiment
-- **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, re-running experiments
+- **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, Exp1 v2 training completed
 
 ## Current Status
 
-**Phase: A-stage collapse fix — retraining with corrected SimVQ.**
+**Phase: Exp1 v2 training completed — awaiting evaluation + Go/No-Go decision.**
 
-Fixed 3 critical SimVQ implementation bugs (frozen C, CW distance, CW quantization). Simplified training pipeline (removed staged VQ, added LR warmup + dead code revival). Currently running 5-Category experiment with 200 epochs on Objaverse-LVIS data.
+Fixed 3 critical SimVQ implementation bugs (frozen C, CW distance, CW quantization). Added encoder warmup, K-means init, cosine LR, and CW-aligned dead code revival. 5-Category experiment (200 epochs) completed with excellent results:
+
+| Metric | v1 (Collapse) | v2 (Fixed) | Improvement |
+|--------|--------------|-----------|-------------|
+| Codebook Utilization | 0.46% | **99.7%** | 217x |
+| Recon Loss | 0.326 | **0.228** | 30% better |
+| Active Codes | 19/4096 | **4084/4096** | 215x |
+
+Next step: Run evaluation script for same-cat/cross-cat Chamfer Distance and Go/No-Go decision. See `TODO.md`.
 
 ## Pipeline
 
@@ -47,7 +55,7 @@ src/                               # Core modules
 ├── patch_dataset.py               # NPZ serialization + PyTorch/PyG Dataset
 ├── model.py                       # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE
 ├── losses.py                      # Masked Chamfer Distance loss
-├── trainer.py                     # Training loop with staged VQ
+├── trainer.py                     # Training loop (encoder warmup + K-means init + dead code revival)
 └── evaluate.py                    # Evaluation metrics + Go/No-Go decision
 
 scripts/                           # CLI entry points
@@ -71,7 +79,8 @@ results/                           # Validation outputs (committed)
 ├── task5_7_validation/            # Encoder/Codebook/Decoder
 ├── task8_10_validation/           # VQ-VAE + Training
 ├── task12_validation/             # Visualization
-└── task13_validation/             # K-means init
+├── task13_validation/             # K-means init
+└── exp1_v2_collapse_fix/          # Exp1 v2 training reports + model analysis
 
 .context/                          # Research documents (chronological)
 ├── 00-09_*.md                     # Research evolution documents

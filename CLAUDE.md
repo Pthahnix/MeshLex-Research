@@ -59,7 +59,8 @@ results/                           # 验证产出（commit 到 repo）
 ├── task5_7_validation/            # Encoder/Codebook/Decoder 验证
 ├── task8_10_validation/           # VQ-VAE + Training 验证
 ├── task12_validation/             # Visualization 验证
-└── task13_validation/             # K-means init 验证
+├── task13_validation/             # K-means init 验证
+└── exp1_v2_collapse_fix/          # Exp1 v2 训练报告 + 模型参数文档
 ```
 
 ## Research Evolution
@@ -80,15 +81,21 @@ results/                           # 验证产出（commit 到 repo）
 
 ## Current Status
 
-**当前阶段**：数据源从 ShapeNet 切换到 Objaverse-LVIS（ShapeNet 审批未通过）。准备执行双实验验证。
+**当前阶段**：Exp1 v2 (Collapse Fix) 训练完成。待执行评估 + Go/No-Go 决策。
 
 - 代码实现：全部完成（src/ + scripts/ + tests/，17 tests passing）
 - 数据源：Objaverse-LVIS（46K objects, 1156 categories，无需审批）
 - 实验设计：双实验（`context/10_objaverse_migration_design.md`）
-  - 实验 1：5-Category（chair/table/airplane 训练，car/lamp 跨类别测试）
-  - 实验 2：LVIS-Wide（500+ 类别广覆盖 universality 验证）
-- 实施计划：`context/11_objaverse_experiment_plan.md`（12 Tasks）
-- 下一步：Task 1 创建 Objaverse 下载脚本 → Task 2 适配预处理脚本 → 执行实验
+  - 实验 1：5-Category（chair/table/airplane 训练，car/lamp 跨类别测试）— **训练完成**
+  - 实验 2：LVIS-Wide（500+ 类别广覆盖 universality 验证）— 待 Go 后执行
+- Collapse Fix：诊断并修复了 SimVQ 实现的 3 个 critical bug（`context/12_codebook_collapse_diagnosis.md`、`context/20_collapse_fix_implementation_plan.md`）
+- **Exp1 v2 训练结果**：
+  - Codebook Utilization: **99.7%**（vs v1 的 0.46%，提升 217x）
+  - Recon Loss: **0.228**（vs v1 的 0.326，改善 30%）
+  - 模型: 1.06M params, ~1 GB GPU memory, RTX 4090 训练 ~2.5h
+  - Checkpoint: `data/checkpoints/5cat_v2/checkpoint_final.pt`
+  - 详细报告: `results/exp1_v2_collapse_fix/`
+- **下一步**: Task 11 — 运行评估脚本（same-cat/cross-cat CD + Go/No-Go）→ 详见 `TODO.md`
 
 ## Conventions
 
