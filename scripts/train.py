@@ -68,8 +68,13 @@ def main():
     # Resume from checkpoint if provided
     if args.resume:
         ckpt = torch.load(args.resume, map_location=device, weights_only=False)
-        model.load_state_dict(ckpt["model_state_dict"])
+        # Use strict=False for cross-stage resume (e.g., A-stage → B-stage adds kv_proj)
+        missing, unexpected = model.load_state_dict(ckpt["model_state_dict"], strict=False)
         print(f"Resumed model from {args.resume} (epoch {ckpt.get('epoch', '?')})")
+        if missing:
+            print(f"  New parameters (randomly initialized): {missing}")
+        if unexpected:
+            print(f"  Ignored parameters: {unexpected}")
 
     n_params = sum(p.numel() for p in model.parameters())
     n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
