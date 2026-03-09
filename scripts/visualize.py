@@ -122,6 +122,10 @@ def main():
     parser.add_argument("--codebook_size", type=int, default=4096)
     parser.add_argument("--embed_dim", type=int, default=128)
     parser.add_argument("--hidden_dim", type=int, default=256)
+    parser.add_argument("--num_kv_tokens", type=int, default=1,
+                        help="Number of KV tokens in decoder (1=A-stage, 4=B-stage)")
+    parser.add_argument("--use_rotation", action="store_true",
+                        help="Use rotation trick (B-stage)")
     parser.add_argument("--output_dir", type=str, default="results/plots")
     args = parser.parse_args()
 
@@ -130,8 +134,12 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     # Load model
-    model = MeshLexVQVAE(codebook_size=args.codebook_size, embed_dim=args.embed_dim, hidden_dim=args.hidden_dim)
-    ckpt = torch.load(args.checkpoint, map_location=device)
+    model = MeshLexVQVAE(
+        codebook_size=args.codebook_size, embed_dim=args.embed_dim,
+        hidden_dim=args.hidden_dim, use_rotation=args.use_rotation,
+        num_kv_tokens=args.num_kv_tokens,
+    )
+    ckpt = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model_state_dict"])
     model = model.to(device)
 

@@ -19,14 +19,21 @@ def main():
                         help="Test patches from held-out categories (car/lamp)")
     parser.add_argument("--codebook_size", type=int, default=4096)
     parser.add_argument("--embed_dim", type=int, default=128)
+    parser.add_argument("--num_kv_tokens", type=int, default=1,
+                        help="Number of KV tokens in decoder (1=A-stage, 4=B-stage)")
+    parser.add_argument("--use_rotation", action="store_true",
+                        help="Use rotation trick (B-stage)")
     parser.add_argument("--output", type=str, default="results/eval_results.json")
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Load model
-    model = MeshLexVQVAE(codebook_size=args.codebook_size, embed_dim=args.embed_dim)
-    ckpt = torch.load(args.checkpoint, map_location=device)
+    model = MeshLexVQVAE(
+        codebook_size=args.codebook_size, embed_dim=args.embed_dim,
+        use_rotation=args.use_rotation, num_kv_tokens=args.num_kv_tokens,
+    )
+    ckpt = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model_state_dict"])
     model = model.to(device)
     print("Model loaded.")
