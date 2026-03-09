@@ -18,21 +18,25 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 
 - **Day 1 (2026-03-06)**: Project inception, gap analysis, idea generation, experiment design
 - **Day 2 (2026-03-07)**: Full codebase implementation (14 tasks), unit tests, initial experiment
-- **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, Exp1 v2 training completed
+- **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, Exp1 v2 (A-stage 5cat) training + eval completed — **STRONG GO**. B-stage code implemented (rotation trick + multi-token KV decoder)
+- **Day 4 (2026-03-09)**: Exp3 (B-stage 5cat) completed — **STRONG GO** (CD -6.2%). Discovered rotation trick incompatible with SimVQ. LVIS-Wide data prepared (844 categories, 71K patches). Exp2 (A-stage LVIS-Wide) training in progress
 
 ## Current Status
 
-**Phase: Exp1 v2 training completed — awaiting evaluation + Go/No-Go decision.**
+**Phase: 4-experiment matrix (A/B stage × 5cat/LVIS-Wide). 2/4 completed, 1 training.**
 
-Fixed 3 critical SimVQ implementation bugs (frozen C, CW distance, CW quantization). Added encoder warmup, K-means init, cosine LR, and CW-aligned dead code revival. 5-Category experiment (200 epochs) completed with excellent results:
+| # | Experiment | Status | Result |
+|---|-----------|--------|--------|
+| 1 | A-stage × 5-Category | **Done** | STRONG GO (ratio 1.14x, util 46%) |
+| 3 | B-stage × 5-Category | **Done** | STRONG GO (ratio 1.18x, CD -6.2%, util 99%) |
+| 2 | A-stage × LVIS-Wide | **Training** (epoch 109/200) | util 75%, recon 0.222 |
+| 4 | B-stage × LVIS-Wide | Pending | — |
 
-| Metric | v1 (Collapse) | v2 (Fixed) | Improvement |
-|--------|--------------|-----------|-------------|
-| Codebook Utilization | 0.46% | **99.7%** | 217x |
-| Recon Loss | 0.326 | **0.228** | 30% better |
-| Active Codes | 19/4096 | **4084/4096** | 215x |
-
-Next step: Run evaluation script for same-cat/cross-cat Chamfer Distance and Go/No-Go decision. See `TODO.md`.
+Key findings so far:
+- SimVQ collapse fix successful: utilization 0.46% → 99%+ (217x improvement)
+- B-stage multi-token KV decoder effective: reconstruction CD reduced 6.2%
+- Rotation trick incompatible with SimVQ (causes rapid collapse)
+- Cross-category generalization validated: CD ratio 1.14-1.18x (< 1.2 threshold)
 
 ## Pipeline
 
