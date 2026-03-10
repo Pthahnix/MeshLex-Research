@@ -113,6 +113,58 @@ results/                           # 验证产出（commit 到 repo）
 - **commit 后立即 push**：每次 commit 完成后执行 `git push`
 - commit 粒度：以"功能"为单位，而非单个函数。例如：patch 分割模块写完+测试通过 = 一次 commit
 
+## Checkpoint 备份规范 — 重要
+
+**每次训练完成后，必须立即将 checkpoint 上传至 HuggingFace Model Repo：`Pthahnix/Meshlex-Research`。这是强制要求，不得跳过。**
+
+Checkpoint 文件只存在于 RunPod 本地磁盘，pod 重置后将永久丢失。HuggingFace 是唯一的持久化备份。
+
+### 上传步骤
+
+```bash
+# 安装（如未安装）
+pip install huggingface_hub
+
+# 上传 checkpoint（训练结束后立即执行）
+python - <<'EOF'
+from huggingface_hub import HfApi
+api = HfApi()
+
+# 上传 final checkpoint
+api.upload_file(
+    path_or_fileobj="data/checkpoints/<exp_name>/checkpoint_final.pt",
+    path_in_repo="checkpoints/<exp_name>/checkpoint_final.pt",
+    repo_id="Pthahnix/Meshlex-Research",
+    repo_type="model",
+)
+print("Upload complete.")
+EOF
+```
+
+### 命名规范
+
+| 实验 | `<exp_name>` |
+|------|-------------|
+| Exp1 A-stage 5cat | `exp1_A_5cat` |
+| Exp2 A-stage LVIS-Wide | `exp2_A_lvis_wide` |
+| Exp3 B-stage 5cat | `exp3_B_5cat` |
+| Exp4 B-stage LVIS-Wide | `exp4_B_lvis_wide` |
+| 后续实验 | `exp{N}_{stage}_{data}` |
+
+### 上传内容
+
+- **必传**：`checkpoint_final.pt`（训练结束后的最终模型权重）
+- **必传**：`training_history.json`（完整训练曲线，用于验证训练过程真实性）
+- **可选**：`checkpoint_epoch{N}.pt`（关键 epoch 的中间 checkpoint，如 epoch 100）
+
+### 验证上传成功
+
+上传完成后，必须在终端输出确认信息，并在该实验的 progress/report markdown 中记录：
+
+```
+✅ Checkpoint uploaded to HF: Pthahnix/Meshlex-Research/checkpoints/<exp_name>/checkpoint_final.pt
+```
+
 ## 验证要求 — 重要
 
 - **真实数据验证**：每个 Task 完成后，必须用真实数据（如 ShapeNet mesh）实际运行，产生用户可亲眼查看的结果
