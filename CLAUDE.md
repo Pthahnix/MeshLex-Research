@@ -81,25 +81,28 @@ results/                           # 验证产出（commit 到 repo）
 
 ## Current Status
 
-**当前阶段**：3/4 实验完成，均 STRONG GO。待执行 Exp4 (B-stage LVIS-Wide)。
+**当前阶段**：Pod 重置后恢复中。Exp1/Exp3 已重训，LVIS-Wide 数据重新下载中。
 
 - 代码实现：全部完成（src/ + scripts/ + tests/，21 tests passing）
 - 数据源：Objaverse-LVIS（46K objects, 1156 categories，无需审批）
 - 实验设计：四实验矩阵（A/B stage × 5cat/LVIS-Wide）
-  - **Exp1**: A-stage × 5cat — **STRONG GO** (ratio 1.14x, util 46%, recon 0.228)
-  - **Exp2**: A-stage × LVIS-Wide — **STRONG GO** (ratio 1.07x, util 67.8%, recon 0.217)
-  - **Exp3**: B-stage × 5cat — **STRONG GO** (ratio 1.18x, util 47%, recon 0.209, CD -6.2%)
+  - **Exp1**: A-stage × 5cat — **STRONG GO** (ratio 1.14x, util 46%, recon 0.241)
+  - **Exp2**: A-stage × LVIS-Wide — **需重训** (上次 STRONG GO: ratio 1.07x, util 67.8%)
+  - **Exp3**: B-stage × 5cat — **STRONG GO** (ratio 1.18x, util 47%, recon 0.229)
   - **Exp4**: B-stage × LVIS-Wide — **待执行**（详见 TODO.md）
 - **关键发现**：
   - SimVQ collapse fix 成功（util 0.46% → 99%+）
   - B-stage multi-token KV decoder 有效（CD -6.2%），但 rotation trick 与 SimVQ 不兼容
   - 跨阶段 resume（A→B stage）需 strict=False 加载
   - **更多类别 = 更好泛化**: LVIS-Wide ratio 1.07x 优于 5-cat 1.14x, util 67.8% vs 46%
-- Checkpoints:
+- HF Checkpoints (Pthahnix/Meshlex-Research):
+  - `checkpoints/exp1_A_5cat/` — Exp1 final checkpoint + history
+  - `checkpoints/exp2_A_lvis_wide/` — Exp2 final checkpoint + history (上次训练)
+  - `checkpoints/exp3_B_5cat/` — Exp3 final checkpoint + history
+- Local Checkpoints:
   - A-stage 5cat: `data/checkpoints/5cat_v2/checkpoint_final.pt`
   - B-stage 5cat: `data/checkpoints/5cat_B/checkpoint_final.pt`
-  - A-stage LVIS-Wide: `data/checkpoints/lvis_wide_A/checkpoint_final.pt`
-- **下一步**: Exp4 B-stage LVIS-Wide → 详见 `TODO.md`
+- **下一步**: 完成 LVIS-Wide 数据下载 → 重训 Exp2 → 执行 Exp4 → 详见 `TODO.md`
 
 ## Conventions
 
