@@ -1,14 +1,14 @@
 # MeshLex — Session Handoff TODO
 
-> **最后更新**: 2026-03-12
-> **当前状态**: Pod 重置后重新训练中。Exp1/Exp3 已重训完成，LVIS-Wide 数据集重新下载中。
+> **最后更新**: 2026-03-12 11:00
+> **当前状态**: LVIS-Wide 数据已就绪，Exp2 A-stage 训练中（7/200 epochs，预计 ~36h）。
 
 ## 实验进度总览
 
 | # | 实验 | 状态 | 结果 | HF Checkpoint |
 |---|------|------|------|---------------|
 | 1 | A-stage × 5-Category | **完成** | STRONG GO (ratio 1.14x, util 46%) | `checkpoints/exp1_A_5cat/` |
-| 2 | A-stage × LVIS-Wide | **需重训** | 上次 STRONG GO (ratio 1.07x, util 67.8%) | `checkpoints/exp2_A_lvis_wide/` (上次) |
+| 2 | A-stage × LVIS-Wide | **训练中** (7/200 ep) | 上次 STRONG GO (ratio 1.07x, util 67.8%) | `checkpoints/exp2_A_lvis_wide/` (上次) |
 | 3 | B-stage × 5-Category | **完成** | STRONG GO (ratio 1.18x, util 47%) | `checkpoints/exp3_B_5cat/` |
 | 4 | B-stage × LVIS-Wide | **待执行** | — | — |
 
@@ -19,8 +19,8 @@
 Pod 被重置，所有本地数据和 checkpoint 丢失。重建步骤：
 1. Exp1 A-stage 5cat — **已重训** (checkpoint 已上传 HF)
 2. Exp3 B-stage 5cat — **已重训** (checkpoint 已上传 HF)
-3. LVIS-Wide 数据集 — **重新下载中** (batched download, 3 batches × ~3500 objects)
-4. Exp2 A-stage LVIS-Wide — 待 LVIS 数据就绪后重训
+3. LVIS-Wide 数据集 — **已完成** (188,696 train / 45,441 val / 12,655 unseen patches)
+4. Exp2 A-stage LVIS-Wide — **训练中** (7/200 epochs, ~11min/epoch, 预计 ~36h)
 5. Exp4 B-stage LVIS-Wide — 待 Exp2 完成后执行
 
 注意：Exp2 上次的 checkpoint 已在 HF 上备份，但本地需要重新训练以获得 LVIS-Wide 数据集的 A-stage checkpoint 供 Exp4 resume。
@@ -31,15 +31,12 @@ Pod 被重置，所有本地数据和 checkpoint 丢失。重建步骤：
 - patches: `data/patches/` (chair, table, airplane, car, lamp — train/test splits)
 - 可直接用于训练
 
-### LVIS-Wide 数据 (下载中)
-- 使用 `scripts/download_lvis_batched.py` 分 3 批下载
-- 每批：下载 GLB → 预处理为 patches → 清除 GLB 缓存
-- 完成后需运行 category_holdout split
-- 命令：
-```bash
-PYTHONUNBUFFERED=1 python scripts/download_lvis_batched.py \
-  --n_batches 3 --max_per_cat 10 --min_per_cat 10
-```
+### LVIS-Wide 数据 (已就绪)
+- 下载 + 预处理 + category_holdout split 全部完成
+- patches 分布：
+  - `data/patches/lvis_wide/seen_train/` — 188,696 patches
+  - `data/patches/lvis_wide/seen_test/` — 45,441 patches
+  - `data/patches/lvis_wide/unseen/` — 12,655 patches
 
 ### Checkpoints (本地)
 - Exp1: `data/checkpoints/5cat_v2/checkpoint_final.pt`
@@ -47,19 +44,13 @@ PYTHONUNBUFFERED=1 python scripts/download_lvis_batched.py \
 
 ## 待执行步骤
 
-### Step 1: 完成 LVIS-Wide 数据下载 + split
-等待 batched download 完成，然后运行：
-```bash
-PYTHONPATH=. python -c "
-from scripts.run_preprocessing import split_category_holdout
-import json
-from pathlib import Path
-meta = json.load(open('data/patch_metadata_lvis_wide.json'))
-split_category_holdout(Path('data/patches/lvis_wide'), meta, holdout_categories=50)
-"
-```
+### Step 1: ~~完成 LVIS-Wide 数据下载 + split~~ ✅ 已完成
 
-### Step 2: 训练 Exp2 A-stage LVIS-Wide
+### Step 2: ~~训练 Exp2 A-stage LVIS-Wide~~ 🔄 训练中
+- PID: 212028, 已完成 7/200 epochs, ~11min/epoch
+- 当前在 encoder warmup 阶段 (epoch < 10)
+- Loss: 0.61 → 0.27 (稳步下降)
+- 预计完成时间：~36h (约 2026-03-13 晚间)
 ```bash
 PYTHONPATH=. python scripts/train.py \
   --train_dirs data/patches/lvis_wide/seen_train \
