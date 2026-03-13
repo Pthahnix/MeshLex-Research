@@ -1,24 +1,24 @@
 {
   "same_category": {
-    "mean_cd": 217.00579434070946,
-    "std_cd": 20.851169861097667,
-    "utilization": 0.678466796875,
-    "n_unique_codes": 2779,
+    "mean_cd": 214.34488298183078,
+    "std_cd": 24.970669558313947,
+    "utilization": 0.952880859375,
+    "n_unique_codes": 3903,
     "total_codes": 4096
   },
   "cross_category": {
-    "mean_cd": 232.3210458545124,
-    "std_cd": 23.237727794092173,
-    "utilization": 0.482421875,
-    "n_unique_codes": 1976,
+    "mean_cd": 218.41091960668564,
+    "std_cd": 28.636786797919743,
+    "utilization": 0.836181640625,
+    "n_unique_codes": 3425,
     "total_codes": 4096
   },
   "go_nogo": {
-    "ratio": 1.0705753114119951,
+    "ratio": 1.0189695996857528,
     "decision": "STRONG GO",
     "next_step": "Proceed to full MeshLex experiment design",
-    "same_cat_cd": 217.00579434070946,
-    "cross_cat_cd": 232.3210458545124,
-    "utilization": 0.678466796875
+    "same_cat_cd": 214.34488298183078,
+    "cross_cat_cd": 218.41091960668564,
+    "utilization": 0.952880859375
   }
 }
