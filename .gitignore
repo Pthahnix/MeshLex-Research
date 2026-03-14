@@ -2,6 +2,7 @@
 CLAUDE.md
 TODO.md
 RUN_GUIDE.md
+context/
 
 # Claude Code runtime (can be reinstalled)
 .claude/
