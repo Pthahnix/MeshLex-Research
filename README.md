@@ -4,8 +4,10 @@
 
 **MeshLex: Learning a Topology-aware Patch Vocabulary for Compositional Mesh Generation**
 
+<a href="https://github.com/Pthahnix/MeshLex-Research"><img alt="GitHub"
+  src="https://img.shields.io/badge/GitHub-MeshLex--Research-181717?logo=github&logoColor=white"/></a>
 <a href="https://huggingface.co/Pthahnix/MeshLex-Research"><img alt="Hugging Face"
-  src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Meshlex--Research-ffc107?color=ffc107&logoColor=white"/></a>
+  src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-MeshLex--Research-ffc107?color=ffc107&logoColor=white"/></a>
 <a href="https://github.com/Pthahnix/MeshLex-Research/blob/main/LICENSE"><img alt="License"
   src="https://img.shields.io/badge/License-Apache_2.0-f5de53?&color=f5de53"/></a>
 
