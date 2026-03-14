@@ -1,3 +1,8 @@
+# Development-only files (not for publishing)
+CLAUDE.md
+TODO.md
+RUN_GUIDE.md
+
 # Claude Code runtime (can be reinstalled)
 .claude/
 .claude.json
