@@ -20,7 +20,8 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 - **Day 2 (2026-03-07)**: Full codebase implementation (14 tasks), unit tests, initial experiment
 - **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, Exp1 v2 (A-stage 5cat) training + eval completed — **STRONG GO**. B-stage code implemented (rotation trick + multi-token KV decoder)
 - **Day 4 (2026-03-09)**: Exp3 (B-stage 5cat) completed — **STRONG GO** (CD -6.2%). Discovered rotation trick incompatible with SimVQ. LVIS-Wide data prepared (844 categories, 71K patches). Exp2 (A-stage LVIS-Wide) completed — **STRONG GO** (ratio 1.07x, util 67.8%). Key finding: more categories = better generalization
-- **Day 5 (2026-03-12~13)**: Pod reset recovery — retrained Exp1/Exp3 from HF checkpoints, expanded LVIS-Wide dataset (1156 categories, 246K patches). Retrained Exp2 (A-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 95.3%). Trained Exp4 (B-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 94.9%). All 4 experiments completed. Final comparison report + visualizations generated. Full dataset + checkpoints backed up to HuggingFace
+- **Day 5 (2026-03-13)**: Pod reset recovery — retrained Exp1/Exp3 from HF checkpoints, expanded LVIS-Wide dataset (1156 categories, 246K patches). Retrained Exp2 (A-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 95.3%). Trained Exp4 (B-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 94.9%). All 4 experiments completed
+- **Day 6 (2026-03-14)**: Final comparison report + visualizations generated. Full dataset + checkpoints backed up to HuggingFace. Documentation updated
 
 ## Current Status
 
