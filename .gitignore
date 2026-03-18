@@ -1,8 +1,6 @@
 # Development-only files (not for publishing)
-CLAUDE.md
-TODO.md
-RUN_GUIDE.md
 .mcp.json
+.env
 
 # Claude Code runtime (can be reinstalled)
 .claude/
