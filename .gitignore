@@ -2,7 +2,7 @@
 CLAUDE.md
 TODO.md
 RUN_GUIDE.md
-context/
+.mcp.json
 
 # Claude Code runtime (can be reinstalled)
 .claude/
