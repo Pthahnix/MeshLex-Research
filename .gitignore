@@ -23,6 +23,9 @@ logs/
 # Data (large files, can be regenerated)
 data/
 
+# Checkpoints (large files, backed up to HF)
+checkpoints/
+
 # Results: validation outputs tracked for user review
 
 # Python
