@@ -4,7 +4,7 @@ Usage:
     python scripts/train_ar.py \
         --sequence_dir data/sequences/lvis_wide \
         --checkpoint_dir data/checkpoints/ar_rvq \
-        --mode rvq --epochs 100 --batch_size 32
+        --mode rvq --epochs 300 --batch_size 4
 """
 import argparse
 import json
@@ -12,7 +12,7 @@ import time
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from pathlib import Path
 import gc
 
@@ -28,13 +28,17 @@ def main():
     parser.add_argument("--checkpoint_dir", default="data/checkpoints/ar")
     parser.add_argument("--codebook_size", type=int, default=1024,
                         help="Codebook K (1024 for RVQ, 4096 for SimVQ)")
-    parser.add_argument("--d_model", type=int, default=768)
-    parser.add_argument("--n_heads", type=int, default=12)
-    parser.add_argument("--n_layers", type=int, default=12)
+    parser.add_argument("--d_model", type=int, default=512)
+    parser.add_argument("--n_heads", type=int, default=8)
+    parser.add_argument("--n_layers", type=int, default=6)
     parser.add_argument("--max_seq_len", type=int, default=1024)
-    parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--epochs", type=int, default=300)
     parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--grad_accum_steps", type=int, default=8,
+                        help="Gradient accumulation steps (effective batch = batch_size * this)")
+    parser.add_argument("--warmup_epochs", type=int, default=10,
+                        help="Linear LR warmup epochs before cosine decay")
     parser.add_argument("--resume", type=str, default=None)
     args = parser.parse_args()
 
@@ -61,7 +65,22 @@ def main():
     print(f"PatchGPT: {n_params / 1e6:.1f}M params")
 
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
-    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
+
+    # LR schedule: linear warmup → cosine annealing
+    warmup_scheduler = LinearLR(
+        optimizer,
+        start_factor=1e-8 / args.lr,
+        end_factor=1.0,
+        total_iters=args.warmup_epochs,
+    )
+    cosine_scheduler = CosineAnnealingLR(
+        optimizer, T_max=args.epochs - args.warmup_epochs
+    )
+    scheduler = SequentialLR(
+        optimizer,
+        schedulers=[warmup_scheduler, cosine_scheduler],
+        milestones=[args.warmup_epochs],
+    )
 
     start_epoch = 0
     history = []
@@ -77,17 +96,26 @@ def main():
         ckpt = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(ckpt["model_state_dict"])
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if "scheduler_state_dict" in ckpt:
+            scheduler.load_state_dict(ckpt["scheduler_state_dict"])
         start_epoch = ckpt["epoch"] + 1
         history = ckpt.get("history", [])
         print(f"Resumed from epoch {start_epoch}")
+
+    # PLACEHOLDER_TRAINING_LOOP
+
+    print(f"Grad accumulation: {args.grad_accum_steps} steps "
+          f"(effective batch = {args.batch_size * args.grad_accum_steps})")
+    print(f"LR schedule: {args.warmup_epochs} warmup epochs → cosine to epoch {args.epochs}")
 
     for epoch in range(start_epoch, args.epochs):
         model.train()
         total_loss = 0
         n_batches = 0
         t0 = time.time()
+        optimizer.zero_grad()
 
-        for input_ids, target_ids in loader:
+        for batch_idx, (input_ids, target_ids) in enumerate(loader):
             input_ids = input_ids.to(device)
             target_ids = target_ids.to(device)
 
@@ -97,23 +125,26 @@ def main():
                 target_ids.reshape(-1),
                 ignore_index=-100,
             )
-
-            optimizer.zero_grad()
+            loss = loss / args.grad_accum_steps
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
 
-            total_loss += loss.item()
+            total_loss += loss.item() * args.grad_accum_steps  # unscaled for logging
             n_batches += 1
+
+            if (batch_idx + 1) % args.grad_accum_steps == 0 or (batch_idx + 1) == len(loader):
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+                optimizer.zero_grad()
 
         scheduler.step()
         avg_loss = total_loss / max(n_batches, 1)
         elapsed = time.time() - t0
+        lr_now = optimizer.param_groups[0]["lr"]
         torch.cuda.empty_cache()
 
-        metrics = {"epoch": epoch, "loss": avg_loss, "time_sec": elapsed}
+        metrics = {"epoch": epoch, "loss": avg_loss, "lr": lr_now, "time_sec": elapsed}
         history.append(metrics)
-        print(f"Epoch {epoch:03d} | loss {avg_loss:.4f} | {elapsed:.1f}s")
+        print(f"Epoch {epoch:03d} | loss {avg_loss:.4f} | lr {lr_now:.2e} | {elapsed:.1f}s")
 
         # Save periodic checkpoint
         if (epoch + 1) % 10 == 0:
@@ -122,6 +153,7 @@ def main():
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
                 "history": history,
                 "config": config,
             }, ckpt_path)
@@ -137,6 +169,7 @@ def main():
         "epoch": args.epochs - 1,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
+        "scheduler_state_dict": scheduler.state_dict(),
         "history": history,
         "config": config,
     }, ckpt_dir / "checkpoint_final.pt")
