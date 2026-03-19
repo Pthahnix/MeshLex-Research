@@ -11,56 +11,84 @@
 ## Project Structure
 
 ```
-.context/                          # 研究上下文文档（按时间顺序）
+context/                           # 研究上下文文档（按时间顺序）
 ├── 00_original_prompt.md          # 原始 LMM 研究构想
-├── 01_gap_analysis_lmm.md         # 75+ 篇论文的 Gap Analysis，识别 7 个研究空白
-├── 02_idea_generation_lmm.md      # 5 个候选 idea，筛选出 MeshFoundation/MeshCascade/MeshSSM
-├── 03_experiment_design_lmm.md    # MeshFoundation v2 完整实验设计
-├── 04_pplx_comprehensive_evaluation.md  # Perplexity 独立评审（Gap 88%/Idea 78/Exp 82）
-├── 05_cc_pplx_debate.md           # CC × Perplexity 深度辩论 → 转向 MeshLex 方向
-├── 06_plan_meshlex_validation.md  # MeshLex 可行性验证实验 plan
-├── 07_impl_plan_meshlex_validation.md  # 14-Task 实现计划（已完成）
-├── 08_experiment_execution_design.md  # Phase A+B 实验执行设计
-├── 09_phase_ab_execution_plan.md      # [legacy] Phase A+B ShapeNet 实施计划（6 Task）
-├── 10_objaverse_migration_design.md   # Objaverse 迁移 + 双实验设计
-├── 11_objaverse_experiment_plan.md    # Objaverse 双实验实施计划（12 Tasks）
-├── 12_codebook_collapse_diagnosis.md  # Codebook Collapse 诊断分析与修复建议
+├── ...                            # 01-12: Gap Analysis → 实验设计 → Collapse 诊断
+├── 22_final_report.md             # v1 最终报告
+├── 23_gap_analysis_graph_tokenization.md  # Graph Tokenization 分析
+├── 24_meshlex_hmt_proposal.md     # HMT 提案
 ├── material/                      # 10 篇核心论文的分析摘要
 └── paper/                         # 300+ 篇论文的 markdown 原文
+
+docs/superpowers/
+├── specs/2026-03-18-meshlex-v2-design.md          # v2 完整设计文档
+└── plans/
+    ├── 2026-03-18-meshlex-v2-implementation.md    # v2 13-task 实现计划
+    └── 2026-03-19-ar-loss-fix-implementation.md   # AR v2 fix plan (7 tasks)
 
 src/                               # 核心代码
 ├── data_prep.py                   # Mesh 加载、降面、归一化
 ├── patch_segment.py               # METIS Patch 分割 + PCA 归一化
 ├── patch_dataset.py               # NPZ 序列化 + PyTorch/PyG Dataset
-├── model.py                       # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE
+├── patch_sequence.py              # Token sequence 编解码 (RVQ 7-token format)
+├── model.py                       # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE (v1)
+├── model_rvq.py                   # MeshLexRVQVAE (v2, 3-level RVQ)
+├── rvq.py                         # ResidualVQ (3-level SimVQ)
+├── ar_model.py                    # PatchGPT (AR transformer for token generation)
+├── stitching.py                   # StitchingMLP + boundary vertex merging
+├── metrics.py                     # NC, F-Score, non-manifold counts
 ├── losses.py                      # Chamfer Distance loss
-├── trainer.py                     # Training loop
-└── evaluate.py                    # Evaluation metrics + Go/No-Go
+├── trainer.py                     # Training loop (supports RVQ + dead code revival)
+├── evaluate.py                    # Evaluation metrics + Go/No-Go
+├── discretize.py                  # Face feature discretization (for BPE)
+├── dual_graph.py                  # Face-adjacency dual graph construction
+└── graph_bpe.py                   # Graph BPE vocabulary learning
 
 scripts/                           # 运行脚本
-├── download_objaverse.py          # 从 Objaverse-LVIS 下载（5cat / lvis_wide 模式）
-├── download_shapenet.py           # [legacy] 从 HuggingFace 下载 ShapeNet
-├── train.py                       # 训练入口（支持 --resume）
-├── evaluate.py                    # 评估入口
-├── visualize.py                   # 可视化（t-SNE, utilization, curves）
-├── init_codebook.py               # K-means codebook 初始化
-├── run_preprocessing.py           # 批量预处理（支持 manifest JSON 输入 + ShapeNet 目录）
-└── validate_task*.py              # 各 Task 验证脚本
+├── train.py                       # v1 训练入口
+├── train_rvq.py                   # RVQ VQ-VAE 训练
+├── train_ar.py                    # AR v2 训练 (20.4M params, grad accum, warmup)
+├── encode_sequences.py            # Patch → token sequence 编码
+├── generate.py                    # 基础生成脚本
+├── generate_v2_pipeline.py        # 完整生成 pipeline + 7 阶段可视化
+├── visualize_mesh_comparison.py   # 原始 vs 重建 mesh 对比 + AR 生成 mesh 可视化
+├── evaluate_generation.py         # 生成质量评估 (CD, token distribution, etc.)
+├── run_phase0_bpe.py              # Phase 0 BPE 可行性验证
+├── run_preprocessing.py           # 批量预处理
+├── download_objaverse.py          # Objaverse-LVIS 下载
+└── ...                            # 其他辅助脚本
 
-tests/                             # 17 unit tests
-├── test_data_prep.py              # 2 tests
-├── test_patch_segment.py          # 4 tests
-├── test_patch_dataset.py          # 3 tests
-└── test_model.py                  # 8 tests
+tests/                             # Unit tests
+├── test_data_prep.py
+├── test_patch_segment.py
+├── test_patch_dataset.py
+├── test_model.py
+├── test_rvq.py
+├── test_ar_model.py
+├── test_train_ar.py               # AR v2: grad accum, warmup, scheduler resume
+├── test_metrics.py
+├── test_stitching.py
+├── test_discretize.py
+├── test_dual_graph.py
+└── test_graph_bpe.py
 
-results/                           # 验证产出（commit 到 repo）
-├── task1_3_validation/            # 数据预处理 + Patch 分割验证
-├── task4_validation/              # Dataset 序列化验证
-├── task5_7_validation/            # Encoder/Codebook/Decoder 验证
-├── task8_10_validation/           # VQ-VAE + Training 验证
-├── task12_validation/             # Visualization 验证
-├── task13_validation/             # K-means init 验证
-└── exp1_v2_collapse_fix/          # Exp1 v2 训练报告 + 模型参数文档
+data/                              # 数据 + checkpoints (gitignored)
+├── meshes/lvis_wide/              # 原始 OBJ meshes
+├── patches/lvis_wide/             # METIS 分割后的 patch NPZ
+├── sequences/rvq_lvis/            # 编码后的 token sequences (4674 meshes)
+└── checkpoints/
+    ├── rvq_lvis/                  # RVQ VQ-VAE checkpoint
+    └── ar_v2/                     # AR v2 checkpoint
+
+results/                           # 实验结果 (committed)
+├── phase0/                        # BPE 可行性报告
+├── rvq_training/                  # RVQ 训练曲线 + 报告
+├── ar_training/                   # AR v1 分析
+├── ar_v2_training/                # AR v2 训练曲线 + 报告
+├── generation_v2_pipeline/        # 40 meshes × 7 可视化
+├── generation_v2_eval/            # Evaluation dashboard
+├── mesh_comparison/               # 原始 vs 重建 + AR 生成 mesh
+└── ...                            # v1 验证结果
 ```
 
 ## Research Evolution
@@ -79,35 +107,50 @@ results/                           # 验证产出（commit 到 repo）
 - **命名策略**：避开 "BPE for Mesh"（被 FreeMesh ICML 2025 占用），使用 "MeshLex"
 - **差异化定位**：vs MeshMosaic（我们是 codebook 选取，不是逐 face 生成）；vs FACE（我们是 per-patch，不是 per-face）
 
-## Current Status
+## Current Status (2026-03-19)
 
-**当前阶段**：**可行性验证全部完成** — 4/4 STRONG GO，准备进入正式实验设计。
+### v1 可行性验证 — COMPLETE (4/4 STRONG GO)
 
-- 代码实现：全部完成（src/ + scripts/ + tests/，21 tests passing）
-- 数据源：Objaverse-LVIS（46K objects, 1156 categories，无需审批）
-- 实验设计：四实验矩阵（A/B stage × 5cat/LVIS-Wide）— **全部完成**
-  - **Exp1**: A-stage × 5cat — **STRONG GO** (ratio 1.145x, util 46.0%)
-  - **Exp2**: A-stage × LVIS-Wide — **STRONG GO** (ratio 1.019x, util 95.3%)
-  - **Exp3**: B-stage × 5cat — **STRONG GO** (ratio 1.185x, util 47.1%)
-  - **Exp4**: B-stage × LVIS-Wide — **STRONG GO** (ratio 1.019x, util 94.9%)
-- **关键发现**：
-  - SimVQ collapse fix 成功（util 0.46% → 99%+）
-  - B-stage multi-token KV decoder 有效（CD -6.2%），但 rotation trick 与 SimVQ 不兼容
-  - 跨阶段 resume（A→B stage）需 strict=False 加载
-  - **更多类别 = 更好泛化**: LVIS-Wide ratio 1.019x 远优于 5-cat 1.145x, util 95% vs 46%
-  - **最佳结果**: Exp4 (B×LVIS) same-cat CD 211.6, cross-cat CD 215.8, 几乎无泛化损失
-- HF Checkpoints (Pthahnix/MeshLex-Research):
-  - `checkpoints/exp1_A_5cat/` — Exp1 final checkpoint + history
-  - `checkpoints/exp2_A_lvis_wide/` — Exp2 final checkpoint + history (上次版本；重训版本待上传)
-  - `checkpoints/exp3_B_5cat/` — Exp3 final checkpoint + history
-  - `checkpoints/exp4_B_lvis_wide/` — 待上传
-- Local Checkpoints:
-  - Exp1: `data/checkpoints/5cat_v2/checkpoint_final.pt`
-  - Exp2: `data/checkpoints/lvis_wide_A/checkpoint_final.pt`
-  - Exp3: `data/checkpoints/5cat_B/checkpoint_final.pt`
-  - Exp4: `data/checkpoints/lvis_wide_B/checkpoint_final.pt`
-- 最终报告: `results/final_comparison/report.md` + 5 张对比可视化图
-- **下一步**: 上传 Exp2/Exp4 checkpoint 到 HF → 设计正式实验 → 论文撰写
+- 四实验矩阵（A/B stage × 5cat/LVIS-Wide）全部通过
+- **最佳结果**: Exp4 (B×LVIS) same-cat CD 211.6, cross-cat CD 215.8, ratio 1.019x
+- **关键发现**: 更多类别 = 更好泛化 (LVIS 1.019x vs 5-cat 1.145x)
+
+### v2 实现 — IN PROGRESS
+
+**已完成的 Phase:**
+
+| Phase | 内容 | 状态 | 关键结果 |
+|-------|------|------|----------|
+| Phase 0 | BPE 可行性 | COMPLETE (GO) | H1a + H5 通过，但 patch size 分布差 (median=1) |
+| Phase 1 | RVQ 训练 | COMPLETE | 200 epochs, loss 0.177, util 100% |
+| Phase 3 | AR 训练 | COMPLETE (v2) | v1: loss 5.41 (87.3M params, 太大) → v2: loss 1.48, ppl 4.4 (20.4M params) |
+| Phase 4 | Generation Pipeline | COMPLETE | 40 meshes generated, surface recon via Ball Pivoting |
+
+**待完成:**
+
+| Phase | 内容 | 状态 | 备注 |
+|-------|------|------|------|
+| Phase 2 | BPE Partition + C3/C4 | PENDING | BPE merge 效果差 (2000 vocab 仅 63 次 merge)，需重新评估 |
+| Phase 5 | Ablation + Metrics | PARTIAL | 基础 evaluation 已跑，完整 ablation 待做 |
+
+### v2 Checkpoints (HF: Pthahnix/MeshLex-Research)
+
+| 模型 | 本地路径 | HF 路径 | 参数量 |
+|------|----------|---------|--------|
+| RVQ VQ-VAE | `data/checkpoints/rvq_lvis/checkpoint_final.pt` | `checkpoints/rvq_lvis/` | ~2M |
+| AR v2 | `data/checkpoints/ar_v2/checkpoint_final.pt` | `checkpoints/ar_v2/` | 20.4M |
+
+### v2 Results
+
+| 目录 | 内容 |
+|------|------|
+| `results/rvq_training/` | RVQ 训练曲线 + 报告 |
+| `results/ar_training/` | AR v1 训练分析 (loss plateau 5.41) |
+| `results/ar_v2_training/` | AR v2 训练曲线 + 报告 (loss 1.48) |
+| `results/generation_v2_pipeline/` | 40 meshes × 7 可视化 (token heatmap, patch positions, point cloud, etc.) |
+| `results/generation_v2_eval/` | Evaluation dashboard + 报告 |
+| `results/mesh_comparison/reconstruction/` | 8 组原始 mesh vs VQ-VAE 重建对比 (Ball Pivoting surface recon) |
+| `results/mesh_comparison/generation/` | 16 个 AR 生成 mesh (OBJ + PLY + PNG, T=0.8/1.0) |
 
 ## Conventions
 
