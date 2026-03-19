@@ -1,0 +1,29 @@
+{
+  "mesh_idx": 6,
+  "n_tokens": 910,
+  "n_patches": 130,
+  "n_points": 3900,
+  "unique_tokens": 326,
+  "vocab_coverage": 0.17564655172413793,
+  "position_range": {
+    "x": [
+      0.0,
+      5.65490198135376
+    ],
+    "y": [
+      0.0,
+      1.0
+    ],
+    "z": [
+      0.0,
+      1.0
+    ]
+  },
+  "scale_stats": {
+    "mean": 0.1652417582417582,
+    "std": 0.2621530635350484,
+    "min": 0.01,
+    "max": 1.0
+  },
+  "generation_time_sec": 2.0880093574523926
+}

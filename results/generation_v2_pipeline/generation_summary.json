@@ -1,0 +1,1202 @@
+[
+  {
+    "mesh_idx": 0,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 431,
+    "vocab_coverage": 0.2322198275862069,
+    "position_range": {
+      "x": [
+        0.0,
+        5.094117641448975
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.07166910866910867,
+      "std": 0.09994747585588708,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3923165798187256,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 1,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 290,
+    "vocab_coverage": 0.15625,
+    "position_range": {
+      "x": [
+        0.0,
+        2.0
+      ],
+      "y": [
+        0.0,
+        1.9764705896377563
+      ],
+      "z": [
+        0.0,
+        1.090196132659912
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.5052234432234433,
+      "std": 1.710215776216414,
+      "min": 0.01,
+      "max": 16.952380952380953
+    },
+    "generation_time_sec": 2.0895297527313232,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 2,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 207,
+    "vocab_coverage": 0.11153017241379311,
+    "position_range": {
+      "x": [
+        0.0,
+        5.67058801651001
+      ],
+      "y": [
+        0.0,
+        1.9647058248519897
+      ],
+      "z": [
+        0.0,
+        1.003921627998352
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.15562393162393162,
+      "std": 0.8831362281286861,
+      "min": 0.01,
+      "max": 9.88888888888889
+    },
+    "generation_time_sec": 2.2501168251037598,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 3,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 133,
+    "vocab_coverage": 0.07165948275862069,
+    "position_range": {
+      "x": [
+        0.0,
+        6.5333333015441895
+      ],
+      "y": [
+        0.5490196347236633,
+        5.529411792755127
+      ],
+      "z": [
+        0.0,
+        5.039215564727783
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.2481794871794872,
+      "std": 0.46797707431166713,
+      "min": 0.01,
+      "max": 3.873015873015873
+    },
+    "generation_time_sec": 2.0964620113372803,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 4,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 410,
+    "vocab_coverage": 0.2209051724137931,
+    "position_range": {
+      "x": [
+        0.0,
+        4.239215850830078
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        -0.0117647061124444,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1290793650793651,
+      "std": 0.22190311852535943,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.1085798740386963,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 5,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 252,
+    "vocab_coverage": 0.13577586206896552,
+    "position_range": {
+      "x": [
+        0.0,
+        6.439215660095215
+      ],
+      "y": [
+        0.1921568661928177,
+        5.435294151306152
+      ],
+      "z": [
+        0.0,
+        4.1019606590271
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.04002686202686203,
+      "std": 0.18079050139613587,
+      "min": 0.01,
+      "max": 1.5555555555555556
+    },
+    "generation_time_sec": 2.106654405593872,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 6,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 335,
+    "vocab_coverage": 0.1804956896551724,
+    "position_range": {
+      "x": [
+        0.0,
+        3.4823529720306396
+      ],
+      "y": [
+        0.0,
+        2.3686275482177734
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1077008547008547,
+      "std": 0.18027390017389147,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.09989070892334,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 7,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 367,
+    "vocab_coverage": 0.19773706896551724,
+    "position_range": {
+      "x": [
+        0.0,
+        3.8705883026123047
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.10075702075702075,
+      "std": 0.12858997068313294,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.126535415649414,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 8,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 378,
+    "vocab_coverage": 0.2036637931034483,
+    "position_range": {
+      "x": [
+        0.0,
+        4.407843112945557
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1096068376068376,
+      "std": 0.18174217058498512,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.061403751373291,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 9,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 268,
+    "vocab_coverage": 0.14439655172413793,
+    "position_range": {
+      "x": [
+        0.0,
+        6.666666507720947
+      ],
+      "y": [
+        -0.10196078568696976,
+        4.937254905700684
+      ],
+      "z": [
+        -0.007843137718737125,
+        3.7568626403808594
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.23995848595848596,
+      "std": 0.9847266699712791,
+      "min": 0.01,
+      "max": 7.73015873015873
+    },
+    "generation_time_sec": 2.1126768589019775,
+    "temperature": 0.7
+  },
+  {
+    "mesh_idx": 0,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 3,
+    "vocab_coverage": 0.0016163793103448276,
+    "position_range": {
+      "x": [
+        1.9490195512771606,
+        3.5098040103912354
+      ],
+      "y": [
+        0.9450980424880981,
+        0.9450980424880981
+      ],
+      "z": [
+        -0.09019608050584793,
+        -0.05882352963089943
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.01,
+      "std": 0.0,
+      "min": 0.01,
+      "max": 0.01
+    },
+    "generation_time_sec": 2.1261675357818604,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 1,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 321,
+    "vocab_coverage": 0.17295258620689655,
+    "position_range": {
+      "x": [
+        0.0,
+        6.023529529571533
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.0536923076923077,
+      "std": 0.13755895554099168,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.4386699199676514,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 2,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 193,
+    "vocab_coverage": 0.10398706896551724,
+    "position_range": {
+      "x": [
+        0.0,
+        5.407843112945557
+      ],
+      "y": [
+        0.0,
+        3.0352940559387207
+      ],
+      "z": [
+        0.0,
+        2.031372547149658
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.12504029304029304,
+      "std": 0.7610722593786938,
+      "min": 0.01,
+      "max": 7.619047619047619
+    },
+    "generation_time_sec": 2.1469178199768066,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 3,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 393,
+    "vocab_coverage": 0.2117456896551724,
+    "position_range": {
+      "x": [
+        0.0,
+        4.188235282897949
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.2302087912087912,
+      "std": 0.16715949583015263,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.0773723125457764,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 4,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 289,
+    "vocab_coverage": 0.1557112068965517,
+    "position_range": {
+      "x": [
+        0.0,
+        4.733333110809326
+      ],
+      "y": [
+        0.0,
+        1.9647058248519897
+      ],
+      "z": [
+        0.0,
+        1.003921627998352
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1553064713064713,
+      "std": 0.8099082938456501,
+      "min": 0.01,
+      "max": 9.158730158730158
+    },
+    "generation_time_sec": 2.0771565437316895,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 5,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 404,
+    "vocab_coverage": 0.21767241379310345,
+    "position_range": {
+      "x": [
+        0.01568627543747425,
+        5.980391979217529
+      ],
+      "y": [
+        0.007843137718737125,
+        3.007843255996704
+      ],
+      "z": [
+        0.0,
+        4.815686225891113
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.22200976800976802,
+      "std": 1.4690813696869958,
+      "min": 0.01,
+      "max": 16.88888888888889
+    },
+    "generation_time_sec": 2.226172924041748,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 6,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 218,
+    "vocab_coverage": 0.11745689655172414,
+    "position_range": {
+      "x": [
+        0.0,
+        1.6039215326309204
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.04833821733821734,
+      "std": 0.11366567863940648,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.548523426055908,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 7,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 417,
+    "vocab_coverage": 0.22467672413793102,
+    "position_range": {
+      "x": [
+        0.1921568661928177,
+        7.196078300476074
+      ],
+      "y": [
+        -0.7960784435272217,
+        4.423529624938965
+      ],
+      "z": [
+        -0.2823529541492462,
+        3.9058823585510254
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.47094627594627597,
+      "std": 1.640707010502843,
+      "min": 0.01,
+      "max": 9.523809523809524
+    },
+    "generation_time_sec": 2.368518114089966,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 8,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 285,
+    "vocab_coverage": 0.15355603448275862,
+    "position_range": {
+      "x": [
+        0.0,
+        3.6588234901428223
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.09767521367521367,
+      "std": 0.17771633647579588,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.1444590091705322,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 9,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 409,
+    "vocab_coverage": 0.22036637931034483,
+    "position_range": {
+      "x": [
+        0.0,
+        4.5333333015441895
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.054901961237192154,
+        0.9725490212440491
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.3029487179487179,
+      "std": 0.17499859860104602,
+      "min": 0.01,
+      "max": 0.746031746031746
+    },
+    "generation_time_sec": 2.077078342437744,
+    "temperature": 0.8
+  },
+  {
+    "mesh_idx": 0,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 282,
+    "vocab_coverage": 0.15193965517241378,
+    "position_range": {
+      "x": [
+        0.0,
+        5.054902076721191
+      ],
+      "y": [
+        0.0,
+        2.3686275482177734
+      ],
+      "z": [
+        0.0,
+        5.074509620666504
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.05936385836385835,
+      "std": 0.33939353155339885,
+      "min": 0.01,
+      "max": 3.5873015873015874
+    },
+    "generation_time_sec": 2.0779054164886475,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 1,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 251,
+    "vocab_coverage": 0.13523706896551724,
+    "position_range": {
+      "x": [
+        0.0,
+        7.196078300476074
+      ],
+      "y": [
+        0.0,
+        2.329411745071411
+      ],
+      "z": [
+        0.0,
+        2.149019718170166
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.04661538461538462,
+      "std": 0.16686058631381484,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.0790727138519287,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 2,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 325,
+    "vocab_coverage": 0.17510775862068967,
+    "position_range": {
+      "x": [
+        0.0,
+        5.235294342041016
+      ],
+      "y": [
+        0.0,
+        2.007843255996704
+      ],
+      "z": [
+        0.0,
+        1.8901960849761963
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.09538217338217339,
+      "std": 0.3436593594153092,
+      "min": 0.01,
+      "max": 3.5873015873015874
+    },
+    "generation_time_sec": 2.0857577323913574,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 3,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 268,
+    "vocab_coverage": 0.14439655172413793,
+    "position_range": {
+      "x": [
+        0.0,
+        2.917647123336792
+      ],
+      "y": [
+        0.0,
+        1.9607843160629272
+      ],
+      "z": [
+        0.0,
+        1.070588231086731
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.25447496947496945,
+      "std": 0.17666696845683094,
+      "min": 0.01,
+      "max": 1.1587301587301588
+    },
+    "generation_time_sec": 2.120234727859497,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 4,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 236,
+    "vocab_coverage": 0.1271551724137931,
+    "position_range": {
+      "x": [
+        0.0,
+        2.0039215087890625
+      ],
+      "y": [
+        0.0,
+        1.9921568632125854
+      ],
+      "z": [
+        0.0,
+        1.215686321258545
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.18643223443223444,
+      "std": 1.3284269329748746,
+      "min": 0.01,
+      "max": 15.142857142857142
+    },
+    "generation_time_sec": 2.0764307975769043,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 5,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 259,
+    "vocab_coverage": 0.13954741379310345,
+    "position_range": {
+      "x": [
+        0.0,
+        2.4352941513061523
+      ],
+      "y": [
+        0.0,
+        1.996078372001648
+      ],
+      "z": [
+        0.0,
+        1.003921627998352
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.15789377289377288,
+      "std": 0.5437063838991876,
+      "min": 0.01,
+      "max": 5.603174603174603
+    },
+    "generation_time_sec": 2.089691638946533,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 6,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 326,
+    "vocab_coverage": 0.17564655172413793,
+    "position_range": {
+      "x": [
+        0.0,
+        5.65490198135376
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1652417582417582,
+      "std": 0.2621530635350484,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.0880093574523926,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 7,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 361,
+    "vocab_coverage": 0.1945043103448276,
+    "position_range": {
+      "x": [
+        0.0,
+        1.929411768913269
+      ],
+      "y": [
+        0.0,
+        1.9764705896377563
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.14017216117216116,
+      "std": 0.1759291234281247,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.0979275703430176,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 8,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 288,
+    "vocab_coverage": 0.15517241379310345,
+    "position_range": {
+      "x": [
+        0.0,
+        3.992156744003296
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.18901587301587303,
+      "std": 1.2737324423556866,
+      "min": 0.01,
+      "max": 14.507936507936508
+    },
+    "generation_time_sec": 2.2068674564361572,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 9,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 307,
+    "vocab_coverage": 0.1654094827586207,
+    "position_range": {
+      "x": [
+        0.0,
+        5.6901960372924805
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.108008547008547,
+      "std": 0.20883115716124756,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.2075436115264893,
+    "temperature": 0.9
+  },
+  {
+    "mesh_idx": 0,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 318,
+    "vocab_coverage": 0.1713362068965517,
+    "position_range": {
+      "x": [
+        0.0,
+        6.337255001068115
+      ],
+      "y": [
+        0.0,
+        2.329411745071411
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.18449084249084247,
+      "std": 0.22718278612942366,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.2721056938171387,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 1,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 360,
+    "vocab_coverage": 0.1939655172413793,
+    "position_range": {
+      "x": [
+        0.0,
+        1.2392157316207886
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.12077899877899877,
+      "std": 0.21510667452620785,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3211045265197754,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 2,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 353,
+    "vocab_coverage": 0.19019396551724138,
+    "position_range": {
+      "x": [
+        0.0,
+        5.811764717102051
+      ],
+      "y": [
+        0.0,
+        1.9529411792755127
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.21398778998778997,
+      "std": 0.31314248295439673,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3572936058044434,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 3,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 345,
+    "vocab_coverage": 0.18588362068965517,
+    "position_range": {
+      "x": [
+        0.0,
+        6.584313869476318
+      ],
+      "y": [
+        0.0,
+        4.933333396911621
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.10121611721611723,
+      "std": 0.17071685405922277,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3610405921936035,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 4,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 429,
+    "vocab_coverage": 0.23114224137931033,
+    "position_range": {
+      "x": [
+        0.0,
+        2.0117647647857666
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.1764041514041514,
+      "std": 0.25227898563847556,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.1015381813049316,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 5,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 419,
+    "vocab_coverage": 0.2257543103448276,
+    "position_range": {
+      "x": [
+        0.0,
+        2.5176470279693604
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.29031379731379736,
+      "std": 0.18016739794587694,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.10235857963562,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 6,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 327,
+    "vocab_coverage": 0.17618534482758622,
+    "position_range": {
+      "x": [
+        0.0,
+        3.984313726425171
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.10684371184371184,
+      "std": 0.23281401815668404,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3621373176574707,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 7,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 382,
+    "vocab_coverage": 0.20581896551724138,
+    "position_range": {
+      "x": [
+        0.0,
+        5.380392074584961
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.09026495726495726,
+      "std": 0.15274750554114527,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.589664936065674,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 8,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 246,
+    "vocab_coverage": 0.13254310344827586,
+    "position_range": {
+      "x": [
+        0.0,
+        1.0
+      ],
+      "y": [
+        0.0,
+        1.0
+      ],
+      "z": [
+        0.0,
+        1.0
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.06435164835164835,
+      "std": 0.17234168674351072,
+      "min": 0.01,
+      "max": 1.0
+    },
+    "generation_time_sec": 2.3981828689575195,
+    "temperature": 1.0
+  },
+  {
+    "mesh_idx": 9,
+    "n_tokens": 910,
+    "n_patches": 130,
+    "n_points": 3900,
+    "unique_tokens": 308,
+    "vocab_coverage": 0.16594827586206898,
+    "position_range": {
+      "x": [
+        0.0,
+        6.149019718170166
+      ],
+      "y": [
+        0.0,
+        4.79215669631958
+      ],
+      "z": [
+        0.0,
+        3.7882351875305176
+      ]
+    },
+    "scale_stats": {
+      "mean": 0.32459829059829054,
+      "std": 1.3536005300675351,
+      "min": 0.01,
+      "max": 15.507936507936508
+    },
+    "generation_time_sec": 2.4810631275177,
+    "temperature": 1.0
+  }
+]

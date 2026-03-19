@@ -1,0 +1,312 @@
+/usr/local/lib/python3.11/dist-packages/torch/nn/modules/transformer.py:307: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+/workspace/MeshLex-Research/scripts/generate_v2_pipeline.py:227: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  cmap = plt.cm.get_cmap('tab20')
+Device: cuda
+Output: results/generation_v2_pipeline
+Temperatures: [0.7, 0.8, 0.9, 1.0]
+Meshes per temperature: 10
+Loading AR v2 model...
+  AR model: 20.4M params, config={'vocab_size': 1856, 'd_model': 512, 'n_heads': 8, 'n_layers': 6, 'max_seq_len': 1024}
+Loading RVQ VQ-VAE...
+  VQ-VAE loaded
+
+============================================================
+Temperature: 0.7
+============================================================
+
+  Generating mesh 1/10 (temp=0.7)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 2/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 3/10 (temp=0.7)...
+    Generated 910 tokens in 2.3s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 4/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 5/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 6/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 7/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 8/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 9/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 10/10 (temp=0.7)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+============================================================
+Temperature: 0.8
+============================================================
+
+  Generating mesh 1/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 2/10 (temp=0.8)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 3/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 4/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 5/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 6/10 (temp=0.8)...
+    Generated 910 tokens in 2.2s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 7/10 (temp=0.8)...
+    Generated 910 tokens in 2.5s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 8/10 (temp=0.8)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 9/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 10/10 (temp=0.8)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+============================================================
+Temperature: 0.9
+============================================================
+
+  Generating mesh 1/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 2/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 3/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 4/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 5/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 6/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 7/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 8/10 (temp=0.9)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 9/10 (temp=0.9)...
+    Generated 910 tokens in 2.2s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 10/10 (temp=0.9)...
+    Generated 910 tokens in 2.2s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+============================================================
+Temperature: 1.0
+============================================================
+
+  Generating mesh 1/10 (temp=1.0)...
+    Generated 910 tokens in 2.3s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 2/10 (temp=1.0)...
+    Generated 910 tokens in 2.3s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 3/10 (temp=1.0)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 4/10 (temp=1.0)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 5/10 (temp=1.0)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 6/10 (temp=1.0)...
+    Generated 910 tokens in 2.1s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 7/10 (temp=1.0)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 8/10 (temp=1.0)...
+    Generated 910 tokens in 2.6s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 9/10 (temp=1.0)...
+    Generated 910 tokens in 2.4s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+  Generating mesh 10/10 (temp=1.0)...
+    Generated 910 tokens in 2.5s
+    Decoded 130 patches
+    Decoded 130 patches → 3900 points
+
+============================================================
+Generation complete!
+  Total meshes: 40
+  Output: results/generation_v2_pipeline
+============================================================

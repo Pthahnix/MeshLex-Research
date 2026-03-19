@@ -1,0 +1,33 @@
+============================================================
+MeshLex v2 Generation Evaluation
+============================================================
+
+1. Token Distribution Analysis...
+  T=0.7: 1300 patches, CB util L1=32.8% L2=41.8% L3=47.8%
+  T=0.8: 1300 patches, CB util L1=31.0% L2=35.3% L3=42.0%
+  T=0.9: 1300 patches, CB util L1=29.0% L2=45.2% L3=49.8%
+  T=1.0: 1300 patches, CB util L1=40.5% L2=43.5% L3=50.2%
+
+2. Evaluating T=0.7...
+  Mean pairwise CD: 0.4489
+  Spatial spread: 11.420 ± 7.967
+  Point density: 302.2 ± 299.8
+
+2. Evaluating T=0.8...
+  Mean pairwise CD: 1.0786
+  Spatial spread: 11.377 ± 8.987
+  Point density: 847349.7 ± 2540754.5
+
+2. Evaluating T=0.9...
+  Mean pairwise CD: 0.2475
+  Spatial spread: 11.290 ± 8.344
+  Point density: 206.6 ± 205.2
+
+2. Evaluating T=1.0...
+  Mean pairwise CD: 0.2626
+  Spatial spread: 7.175 ± 6.290
+  Point density: 677.5 ± 522.8
+
+3. Creating evaluation dashboard...
+
+Results saved to results/generation_v2_eval
