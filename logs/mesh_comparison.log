@@ -1,0 +1,44 @@
+/usr/local/lib/python3.11/dist-packages/torch/nn/modules/transformer.py:307: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+/workspace/MeshLex-Research/scripts/visualize_mesh_comparison.py:176: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at ../torch/csrc/utils/tensor_new.cpp:278.)
+  tok_indices = torch.tensor([tokens[i]], dtype=torch.long, device=device)
+============================================================
+MeshLex v2 — Mesh Comparison Visualization
+============================================================
+Device: cuda
+
+Loading RVQ VQ-VAE...
+Loading AR v2 model...
+  AR: 20.4M params
+
+Reconstruction comparison: 8 pairs found
+  [1/8] 0009a51366fb45e2876715bde6a574b7
+  [2/8] 00130eea9e884209be92f68378a817e8
+  [3/8] 001cfadfb9204424bccc45501ce6b90e
+  [4/8] 002b5dcd1a7844b19c7ffa63a9b23c68
+  [5/8] 0045e87262664927a3298f2ed0f640c1
+  [6/8] 006387f76f684e1dab80d0a4bb705809
+  [7/8] 0079418517784f2bbf0aec6fd8de3cde
+  [8/8] 00880e3095534192973a34ba730c45c9
+  Saved to results/mesh_comparison/reconstruction
+
+Generation visualization: 8 meshes × 2 temps
+  T=0.8, mesh 1/8
+  T=0.8, mesh 2/8
+  T=0.8, mesh 3/8
+  T=0.8, mesh 4/8
+  T=0.8, mesh 5/8
+  T=0.8, mesh 6/8
+  T=0.8, mesh 7/8
+  T=0.8, mesh 8/8
+  T=1.0, mesh 1/8
+  T=1.0, mesh 2/8
+  T=1.0, mesh 3/8
+  T=1.0, mesh 4/8
+  T=1.0, mesh 5/8
+  T=1.0, mesh 6/8
+  T=1.0, mesh 7/8
+  T=1.0, mesh 8/8
+  Saved to results/mesh_comparison/generation
+
+Done!
