@@ -27,8 +27,9 @@
 8. [Quick Start](#quick-start)
 9. [Technical Deep Dive](#technical-deep-dive)
     - [Research Question](#research-question)
-    - [Model Architecture](#model-architecture)
+    - [Model Architecture (v1 VQ-VAE)](#model-architecture)
     - [SimVQ: Why Codebook Collapse Doesn't Happen](#simvq-why-codebook-collapse-doesnt-happen)
+    - [v2: RVQ + Autoregressive Generation](#v2-rvq--autoregressive-generation)
     - [Evaluation Metrics](#evaluation-metrics)
     - [Experimental Results and Scaling Finding](#experimental-results-and-scaling-finding)
 10. [License](#license)
@@ -47,7 +48,9 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 
 ## Current Status
 
-**Phase: Feasibility validation COMPLETE — 4/4 experiments STRONG GO. Ready for formal experiment design.**
+**Phase: v2 Implementation IN PROGRESS — Full generation pipeline operational.**
+
+### v1 Feasibility Validation — COMPLETE (4/4 STRONG GO)
 
 | # | Experiment | Status | Result |
 |---|-----------|--------|--------|
@@ -56,13 +59,22 @@ MeshLex takes a different approach: instead of generating meshes face-by-face, w
 | 3 | B-stage × 5-Category | **Done** | STRONG GO (ratio 1.185x, util 47%) |
 | 4 | B-stage × LVIS-Wide | **Done** | **STRONG GO (ratio 1.019x, util 94.9%)** |
 
-Key findings:
-- SimVQ collapse fix successful: utilization 0.46% → 99%+ (217x improvement)
-- B-stage multi-token KV decoder effective: reconstruction CD reduced 6.2%
-- Rotation trick incompatible with SimVQ (causes rapid collapse)
-- Cross-category generalization validated: CD ratio 1.019-1.185x (all < 1.2 threshold)
-- **More categories = dramatically better generalization**: LVIS-Wide (1156 cat) ratio 1.019x vs 5-cat 1.145x, util 95% vs 46%
-- **Best result (Exp4)**: Same-cat CD 211.6, Cross-cat CD 215.8 — near-zero generalization gap
+### v2 End-to-End Generation — IN PROGRESS
+
+| Module | Component | Status | Key Result |
+|--------|-----------|--------|------------|
+| M1 | METIS Partitioning (baseline) | **Done** | 188K patches from 4674 meshes |
+| M1 | Graph BPE (data-driven) | Feasibility GO, training pending | Merge quality needs improvement |
+| M2 | RVQ Tokenizer (3-level) | **Done** | Loss 0.177, util 100%, 10^9 capacity |
+| M3 | AR Generation (PatchGPT) | **Done** | Loss 1.48, ppl 4.4 (20.4M params) |
+| M4 | Assembly + Surface Recon | **Done** | Ball Pivoting / Alpha Shapes |
+
+Key findings (v2):
+- RVQ 3-level quantization achieves 100% codebook utilization across all levels
+- AR v1 (87.3M params) failed with loss plateau at 5.41 — too many params for 4674 training sequences
+- AR v2 (20.4M params + gradient accumulation + LR warmup) achieved 51x perplexity improvement (224 → 4.4)
+- Full pipeline operational: token generation → RVQ decode → surface reconstruction → OBJ export
+- 4000-face mesh → ~130 patch tokens (7 tokens each) → reconstructed mesh
 
 ## Timeline
 
@@ -71,9 +83,13 @@ Key findings:
 - **Day 3 (2026-03-08)**: Diagnosed codebook collapse, fixed SimVQ implementation, Exp1 v2 (A-stage 5cat) training + eval completed — **STRONG GO**. B-stage code implemented (rotation trick + multi-token KV decoder)
 - **Day 4 (2026-03-09)**: Exp3 (B-stage 5cat) completed — **STRONG GO** (CD -6.2%). Discovered rotation trick incompatible with SimVQ. LVIS-Wide data prepared (844 categories, 71K patches). Exp2 (A-stage LVIS-Wide) completed — **STRONG GO** (ratio 1.07x, util 67.8%). Key finding: more categories = better generalization
 - **Day 5 (2026-03-13)**: Pod reset recovery — retrained Exp1/Exp3 from HF checkpoints, expanded LVIS-Wide dataset (1156 categories, 246K patches). Retrained Exp2 (A-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 95.3%). Trained Exp4 (B-stage LVIS-Wide) — **STRONG GO** (ratio 1.019x, util 94.9%). All 4 experiments completed
-- **Day 6 (2026-03-14)**: Final comparison report + visualizations generated. Full dataset + checkpoints backed up to HuggingFace. Documentation updated
+- **Day 6 (2026-03-14)**: Final comparison report + visualizations generated. Full dataset + checkpoints backed up to HuggingFace. Documentation updated. **v1 feasibility validation complete.**
+- **Day 7 (2026-03-18)**: v2 design spec + 13-task implementation plan written. Phase 0 (BPE feasibility) completed — GO. Phase 1 (RVQ tokenizer) trained — 200 epochs, loss 0.177, util 100%. Sequence encoding completed (4674 meshes). AR v1 trained — loss plateau at 5.41 (87.3M params too large). Diagnosed AR failure, wrote AR v2 fix plan.
+- **Day 8 (2026-03-19)**: AR v2 fix executed — model shrunk to 20.4M params, added gradient accumulation + LR warmup. AR v2 trained 300 epochs, loss 1.48, perplexity 4.4 (51x improvement). Full generation pipeline built with 7-stage visualization. 40 meshes generated across 4 temperatures. Surface reconstruction via Ball Pivoting. 8 reconstruction comparisons (original vs decoded) + 16 generation visualizations with OBJ exports. Evaluation dashboard created.
 
 ## Pipeline
+
+### v1: Patch Vocabulary Learning (VQ-VAE)
 
 ```
 Objaverse-LVIS GLB → Decimation (pyfqmr) → Normalize [-1,1]
@@ -85,6 +101,24 @@ Objaverse-LVIS GLB → Decimation (pyfqmr) → Normalize [-1,1]
     → Cross-attention MLP Decoder → Reconstructed vertices
 ```
 
+### v2: End-to-End Mesh Generation
+
+```
+Training:
+  Objaverse-LVIS (46K objects, 1156 categories)
+    → METIS Partitioning → 188K patches
+    → RVQ VQ-VAE (3-level, K=1024/level) → Token sequences
+    → PatchGPT (20.4M params) autoregressive training
+
+Generation:
+  PatchGPT generates token sequence (130 patches × 7 tokens)
+    → Decode: (pos_x, pos_y, pos_z, scale, cb_L1, cb_L2, cb_L3)
+    → RVQ Decoder → 30 vertices per patch (local space)
+    → Transform to world space (scale + translate)
+    → Ball Pivoting surface reconstruction → Triangle mesh
+    → Export OBJ
+```
+
 ## Repository Structure
 
 ```
@@ -92,33 +126,49 @@ src/                               # Core modules
 ├── data_prep.py                   # Mesh loading, decimation, normalization
 ├── patch_segment.py               # METIS patch segmentation + PCA normalization
 ├── patch_dataset.py               # NPZ serialization + PyTorch/PyG Dataset
-├── model.py                       # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE
+├── patch_sequence.py              # Token sequence encode/decode (RVQ 7-token format)
+├── model.py                       # PatchEncoder, SimVQCodebook, PatchDecoder, MeshLexVQVAE (v1)
+├── model_rvq.py                   # MeshLexRVQVAE (v2, 3-level RVQ)
+├── rvq.py                         # ResidualVQ (3-level SimVQ quantizer)
+├── ar_model.py                    # PatchGPT (autoregressive transformer)
+├── stitching.py                   # StitchingMLP + boundary vertex merging
+├── metrics.py                     # NC, F-Score, non-manifold counts
 ├── losses.py                      # Masked Chamfer Distance loss
 ├── trainer.py                     # Training loop (encoder warmup + K-means init + dead code revival)
-└── evaluate.py                    # Evaluation metrics + Go/No-Go decision
+├── evaluate.py                    # Evaluation metrics + Go/No-Go decision
+├── discretize.py                  # Face feature discretization (for Graph BPE)
+├── dual_graph.py                  # Face-adjacency dual graph construction
+└── graph_bpe.py                   # Graph BPE vocabulary learning
 
 scripts/                           # CLI entry points
+├── train.py                       # v1 VQ-VAE training (supports --resume)
+├── train_rvq.py                   # v2 RVQ VQ-VAE training
+├── train_ar.py                    # v2 AR training (PatchGPT, grad accum, LR warmup)
+├── encode_sequences.py            # Patch → token sequence encoding
+├── generate.py                    # Basic generation script
+├── generate_v2_pipeline.py        # Full generation pipeline + 7-stage visualization
+├── visualize_mesh_comparison.py   # Original vs reconstructed mesh comparison + AR generation
+├── evaluate_generation.py         # Generation quality evaluation (CD, token distribution)
+├── run_phase0_bpe.py              # Phase 0 BPE feasibility verification
 ├── download_objaverse.py          # Download from Objaverse-LVIS (5cat / lvis_wide modes)
-├── download_lvis_batched.py       # Batched LVIS-Wide download (disk-safe)
 ├── run_preprocessing.py           # Batch preprocess (supports manifest JSON input)
-├── train.py                       # Training (supports --resume)
-├── init_codebook.py               # K-means codebook initialization
-├── evaluate.py                    # Same-cat / cross-cat evaluation
-├── visualize.py                   # t-SNE, utilization histogram, training curves
-└── final_comparison.py            # Cross-experiment comparison visualizations
+└── ...                            # Other utility scripts
 
-tests/                             # Unit tests
-├── test_data_prep.py
-├── test_patch_segment.py
-├── test_patch_dataset.py
-└── test_model.py
+tests/                             # Unit tests (25+)
+├── test_model.py, test_rvq.py, test_ar_model.py, test_train_ar.py
+├── test_metrics.py, test_stitching.py
+├── test_discretize.py, test_dual_graph.py, test_graph_bpe.py
+└── ...
 
 results/                           # Experiment outputs (committed)
-├── exp1_A_5cat/                   # Exp1 eval + visualizations
-├── exp2_A_lvis_wide/              # Exp2 eval + visualizations
-├── exp3_B_5cat/                   # Exp3 eval + visualizations
-├── exp4_B_lvis_wide/              # Exp4 eval results
-└── final_comparison/              # 4-experiment comparison dashboard + report
+├── phase0/                        # BPE feasibility report
+├── rvq_training/                  # RVQ training curves + report
+├── ar_training/                   # AR v1 analysis (loss plateau 5.41)
+├── ar_v2_training/                # AR v2 training curves + report (loss 1.48)
+├── generation_v2_pipeline/        # 40 meshes × 7 visualizations per mesh
+├── generation_v2_eval/            # Evaluation dashboard + report
+├── mesh_comparison/               # Original vs reconstructed + AR-generated meshes (OBJ)
+└── final_comparison/              # v1 4-experiment comparison dashboard
 ```
 
 ## Key Differentiators
@@ -292,6 +342,27 @@ flowchart TD
         OLD -.->|"SimVQ solves"| NEW
     end
 ```
+
+### v2: RVQ + Autoregressive Generation
+
+v2 extends the patch vocabulary from reconstruction to full generation. The key addition is a **Residual Vector Quantizer (RVQ)** that replaces SimVQ, and an **autoregressive transformer (PatchGPT)** that generates meshes as patch token sequences.
+
+**RVQ (3-level Residual Quantization)**: Instead of a single codebook lookup, RVQ quantizes in 3 successive levels — each level encodes the residual error from the previous. With K=1024 per level, the effective vocabulary is 1024^3 ≈ 10^9, vastly exceeding SimVQ's 4096. Each level uses SimVQ internally (frozen C + learnable W) to prevent collapse.
+
+**PatchGPT (20.4M params)**: A GPT-2 style transformer that generates patch token sequences autoregressively. Each patch is represented by 7 tokens: `(pos_x, pos_y, pos_z, scale, cb_L1, cb_L2, cb_L3)`. A 130-patch mesh = 910 tokens.
+
+```
+Token vocabulary (1856 total):
+  [0, 255]     → pos_x (256 bins)
+  [256, 511]   → pos_y (256 bins)
+  [512, 767]   → pos_z (256 bins)
+  [768, 831]   → scale (64 bins)
+  [832, 1855]  → codebook index (1024 entries)
+```
+
+**Training**: AdamW, effective batch 32 (micro=4 × accum=8), 10-epoch linear warmup → cosine decay, 300 epochs. Final loss 1.48, perplexity 4.4.
+
+**Generation pipeline**: PatchGPT generates tokens → decode positions/scales/codebook indices → RVQ decoder reconstructs 30 vertices per patch → transform to world space → Ball Pivoting surface reconstruction → OBJ export.
 
 ### Evaluation Metrics
 
