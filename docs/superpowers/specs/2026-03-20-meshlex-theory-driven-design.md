@@ -104,6 +104,11 @@ For K ∈ {32, 64, 128, 256, 512, 1024, 2048, 4096}:
     3. 画出 D(K) vs K 曲线
 ```
 
+**固定架构**：使用 `src/model_rvq.py` 中的 `PatchEncoder` + `SimVQCodebook` + `PatchDecoder`，仅改变 codebook 大小 K。具体参数：
+- Encoder: 3-layer GCN, hidden_dim=256
+- Codebook: SimVQ, embedding_dim=256
+- Decoder: 3-layer MLP, hidden_dim=256
+
 **期望信号**：
 - D(K) 下降不均匀，在某些 K* 处急剧下降
 - 这些 K* 是"新增 token 刚好能区分一种新曲率类型"的阈值
@@ -214,16 +219,18 @@ theorem finite_sum_markov {α : Type*} (s : Finset α)
 
 **Step 1**: 预计算所有 patch 的曲率 $|\bar{K}_P|$
 
-**Step 2**: 按曲率大小分成 B=5 个 bin
+**Step 2**: 按曲率大小分成 B=5 个 bin（互斥区间）
 
 | Bin | 曲率范围 | 历史频率 | Codeword 分配 |
 |-----|----------|----------|---------------|
-| 1 (flat) | $\|K\| < 0.1$ | ~40% | 200 |
-| 2 (mild) | $\|K\| < 0.3$ | ~25% | 130 |
-| 3 (medium) | $\|K\| < 0.6$ | ~20% | 100 |
-| 4 (sharp) | $\|K\| < 1.0$ | ~10% | 52 |
+| 1 (flat) | $0 \leq \|K\| < 0.1$ | ~40% | 200 |
+| 2 (mild) | $0.1 \leq \|K\| < 0.3$ | ~25% | 130 |
+| 3 (medium) | $0.3 \leq \|K\| < 0.6$ | ~20% | 100 |
+| 4 (sharp) | $0.6 \leq \|K\| < 1.0$ | ~10% | 52 |
 | 5 (extreme) | $\|K\| \geq 1.0$ | ~5% | 30 |
 | **Total** | | 100% | **512** |
+
+**分配逻辑**：对每个 patch，计算 $|\bar{K}_P|$，然后按上表唯一确定所属 bin。
 
 **Step 3**: 每个 bin 单独训练一个小 SimVQ sub-codebook
 
@@ -255,8 +262,9 @@ theorem finite_sum_markov {α : Type*} (s : Finset α)
 | 阶段 | 内容 | 数据 | 时间估算 |
 |------|------|------|----------|
 | Pre-compute | 计算所有 patch 的 $\bar{K}$ | 全量 | ~2h |
-| VQ-VAE | 训练曲率感知 codebook | 全量 | ~15h GPU |
-| Baseline | 训练均匀 VQ baseline（对比用） | 全量 | ~15h GPU |
+| VQ-VAE | 训练曲率感知 codebook（512 tokens） | 全量 | ~15h GPU |
+| Baseline-512 | 训练均匀 VQ baseline（512 tokens，对比用） | 全量 | ~15h GPU |
+| Upper-bound-1024 | 训练均匀 VQ 上界（1024 tokens，可选） | 全量 | ~15h GPU |
 | AR model | 训练 AR 生成模型 | 全量 token sequences | ~30h GPU |
 | Eval | 重建 + 生成质量评估 | ShapeNet Chair/Table | ~5h |
 
