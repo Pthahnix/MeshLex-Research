@@ -32,17 +32,19 @@ Each row represents one patch from one mesh.
 | `source` | string | — | `"objaverse"` or `"shapenet"` |
 | `n_faces` | int32 | — | Number of faces in patch |
 | `n_verts` | int32 | — | Number of vertices in patch |
-| `faces` | python(ndarray) | (F, 3) | Local vertex indices, int32 |
-| `vertices` | python(ndarray) | (V, 3) | World-space vertex coords, float32 |
-| `local_vertices` | python(ndarray) | (V, 3) | PCA-aligned + unit-scaled coords, float32 |
-| `local_vertices_nopca` | python(ndarray) | (V, 3) | Centered + unit-scaled (no PCA), float32 |
-| `centroid` | python(ndarray) | (3,) | Patch centroid, float32 |
-| `principal_axes` | python(ndarray) | (3, 3) | PCA rotation matrix, float32 |
+| `faces` | list(int32) | F×3 flattened | Local vertex indices; reshape with `(n_faces, 3)` |
+| `vertices` | list(float32) | V×3 flattened | World-space vertex coords; reshape with `(n_verts, 3)` |
+| `local_vertices` | list(float32) | V×3 flattened | PCA-aligned + unit-scaled coords; reshape with `(n_verts, 3)` |
+| `local_vertices_nopca` | list(float32) | V×3 flattened | Centered + unit-scaled (no PCA); reshape with `(n_verts, 3)` |
+| `centroid` | list(float32) | 3 | Patch centroid |
+| `principal_axes` | list(float32) | 9 flattened | PCA rotation matrix; reshape with `(3, 3)` |
 | `scale` | float32 | — | Bounding sphere radius |
-| `boundary_vertices` | python(ndarray) | (B,) | Boundary vertex local indices, int32 |
-| `global_face_indices` | python(ndarray) | (F,) | Original mesh face indices, int32 |
+| `boundary_vertices` | list(int32) | B | Boundary vertex local indices |
+| `global_face_indices` | list(int32) | F | Original mesh face indices |
 
-**Estimated size:** ~2.5M rows, 5–12 GB Parquet (compressed).
+**Serialization:** All variable-length array columns use Parquet-native `list(float32)` or `list(int32)`. Arrays are flattened via `.flatten().tolist()` before insertion. Downstream reconstruction uses `n_faces` / `n_verts` columns for reshaping. Empty arrays (e.g., `boundary_vertices` for interior patches) produce empty lists `[]`.
+
+**Estimated size:** ~2.5M rows, 5–15 GB Parquet (compressed). Exact size depends on vertex/face counts; validate after first batch.
 
 ## 4. Architecture
 
@@ -77,10 +79,12 @@ ShapeNet Pipeline (51K meshes, 55 synsets):
     ProgressTracker.mark_done(synset_id)
 
 Post-processing:
-  daft.read_huggingface("Pthahnix/MeshLex-Patches") → lazy DataFrame
+  daft.read_parquet("hf://datasets/Pthahnix/MeshLex-Patches/**/*.parquet",
+                    io_config=config) → lazy DataFrame
+  df.select("mesh_id", "category", "source").distinct().collect() → unique meshes
   compute stats (total meshes, patches, category distribution)
   generate_splits(holdout_count=100, test_ratio=0.2, seed=42)
-  upload splits.json + stats.json to HF
+  upload splits.json + stats.json to HF via huggingface_hub
 ```
 
 ### 4.2 Core Conversion Function
@@ -114,15 +118,16 @@ def patches_to_daft_rows(
         rows["source"].append(source)
         rows["n_faces"].append(p.faces.shape[0])
         rows["n_verts"].append(p.local_vertices.shape[0])
-        rows["faces"].append(p.faces.astype(np.int32))
-        rows["vertices"].append(p.vertices.astype(np.float32))
-        rows["local_vertices"].append(p.local_vertices.astype(np.float32))
-        rows["local_vertices_nopca"].append(p.local_vertices_nopca.astype(np.float32))
-        rows["centroid"].append(p.centroid.astype(np.float32))
-        rows["principal_axes"].append(p.principal_axes.astype(np.float32))
+        # Flatten arrays to lists for Parquet-native list(int32)/list(float32) columns
+        rows["faces"].append(p.faces.astype(np.int32).flatten().tolist())
+        rows["vertices"].append(p.vertices.astype(np.float32).flatten().tolist())
+        rows["local_vertices"].append(p.local_vertices.astype(np.float32).flatten().tolist())
+        rows["local_vertices_nopca"].append(p.local_vertices_nopca.astype(np.float32).flatten().tolist())
+        rows["centroid"].append(p.centroid.astype(np.float32).tolist())
+        rows["principal_axes"].append(p.principal_axes.astype(np.float32).flatten().tolist())
         rows["scale"].append(float(p.scale))
-        rows["boundary_vertices"].append(np.array(p.boundary_vertices, dtype=np.int32))
-        rows["global_face_indices"].append(p.global_face_indices.astype(np.int32))
+        rows["boundary_vertices"].append(np.array(p.boundary_vertices, dtype=np.int32).tolist())
+        rows["global_face_indices"].append(p.global_face_indices.astype(np.int32).tolist())
     return rows
 ```
 
@@ -179,7 +184,7 @@ def make_empty_rows() -> dict[str, list]:
 
 | File | Change |
 |------|--------|
-| `src/patch_segment.py` | Add `local_vertices_nopca: np.ndarray = None` to `MeshPatch` dataclass; compute no-PCA coords in `segment_mesh_to_patches()` |
+| `src/patch_segment.py` | Add `local_vertices_nopca: np.ndarray = None` to `MeshPatch` dataclass. In `segment_mesh_to_patches()`, after the PCA normalization call, compute: `centered = vertices - centroid; local_verts_nopca = centered / scale if scale > 1e-8 else centered`. Pass to `MeshPatch` constructor. |
 
 ### Not Created (vs original plan)
 
@@ -202,8 +207,20 @@ def make_empty_rows() -> dict[str, list]:
 
 - `ProgressTracker` persists completed batch/synset IDs to `progress.json`
 - On restart, completed batches are skipped
-- Daft `write_huggingface()` appends new Parquet files; existing files are not overwritten
+- Daft `write_huggingface()` appends new Parquet files to the repo; each call creates new `.parquet` files without overwriting existing ones
+- **Pre-implementation verification:** Before the full run, test append behavior with a 2-batch dry run: write batch A, then batch B, confirm both Parquet files exist on HF
 - Metadata accumulated in `MetadataCollector`, saved after each batch
+- If OOM occurs during batch accumulation, reduce batch size from 500 to 200
+
+## 7.1 Cache Cleanup
+
+After each Objaverse batch, clean:
+- `~/.objaverse/hf-objaverse-v1/glbs/{uid_prefix}/{uid}.glb` (per-UID GLB files)
+- `~/.cache/huggingface/hub/models--allenai--objaverse*` (HF hub cache)
+
+After each ShapeNet synset, clean:
+- `{work_dir}/shapenet_raw/{synset_id}/` (downloaded OBJ files)
+- `~/.cache/huggingface/hub/datasets--ShapeNet--ShapeNetCore*/` (HF hub cache)
 
 ## 8. Validation Thresholds
 
@@ -217,12 +234,12 @@ def make_empty_rows() -> dict[str, list]:
 | All meshes in splits | 100% |
 | Sample rows completeness | All columns non-null |
 
-Validation script uses `daft.read_huggingface()` to lazily read and check without downloading the full dataset.
+Validation script uses `daft.read_parquet("hf://datasets/Pthahnix/MeshLex-Patches/**/*.parquet", io_config=config)` to lazily read and check without downloading the full dataset. This works for any HF account tier (free/pro).
 
 ## 9. Dependencies
 
 ```
-pip install daft[huggingface] objaverse trimesh pyfqmr-fast pymetis numpy
+pip install "daft[huggingface]>=0.5.0" objaverse trimesh pyfqmr-fast pymetis numpy huggingface_hub
 ```
 
 ## 10. Execution Estimate
