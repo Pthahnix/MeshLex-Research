@@ -126,10 +126,42 @@ For all later dataset-building / streaming / large-download tasks in this reposi
    - the durable artifact is the uploaded HF parquet + progress metadata
    - the local GLB cache is just transient input material
 
+## Persistent Monitoring Setup
+
+After this incident, a persistent monitoring system was set up:
+
+### Monitor Scripts
+
+| Script | Function | Interval |
+|--------|----------|----------|
+| `scripts/disk_alert.py` | Warns when disk ≥ 80% | Every 15 min |
+| `scripts/monitor_pipeline.py` | Generates progress report | Every 15 min |
+| `scripts/monitor_daemon.sh` | Background daemon running above two | Persistent |
+
+### How to Start Monitoring
+
+```bash
+# Start the monitor daemon (runs both disk alert and pipeline monitor)
+nohup /workspace/MeshLex-Research/scripts/monitor_daemon.sh > /tmp/monitor_daemon.log 2>&1 &
+
+# Or start everything together in tmux:
+tmux new-session -d -s dataset "/workspace/MeshLex-Research/scripts/start_pipeline_with_monitor.sh"
+```
+
+### Log Files
+
+- `/tmp/disk_alert.log` - Disk warning output
+- `/tmp/pipeline_monitor.log` - Pipeline report output
+- `/tmp/monitor_daemon.log` - Daemon activity log
+
 ## Files Relevant To This Incident
 
-- `scripts/stream_objaverse_daft.py`
-- `tests/test_stream_objaverse_daft.py`
+- `scripts/stream_objaverse_daft.py` - Main pipeline with fixed cleanup
+- `scripts/disk_alert.py` - Disk usage warning
+- `scripts/monitor_pipeline.py` - Progress reporting
+- `scripts/monitor_daemon.sh` - Background monitoring daemon
+- `scripts/start_pipeline_with_monitor.sh` - Combined launcher
+- `tests/test_stream_objaverse_daft.py` - Regression test
 - `/tmp/dataset_pipeline.log`
 - `/tmp/meshlex/objaverse/progress.json`
 - `/home/cc/.objaverse/hf-objaverse-v1/glbs/`
