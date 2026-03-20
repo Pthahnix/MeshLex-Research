@@ -134,6 +134,7 @@ def patches_to_daft_rows(
 ### 4.3 Daft HF Write Configuration
 
 ```python
+import daft
 from daft.io import IOConfig, HuggingFaceConfig
 
 def get_hf_io_config() -> IOConfig:
@@ -142,7 +143,28 @@ def get_hf_io_config() -> IOConfig:
         target_filesize=128_000_000,       # 128 MB per Parquet file
         max_operations_per_commit=50,      # avoid large commit timeouts
     ))
+
+# Explicit schema to enforce float32/int32 (Daft infers float64 from Python lists)
+PATCH_SCHEMA = daft.Schema._from_field_name_and_types([
+    ("mesh_id", daft.DataType.string()),
+    ("patch_idx", daft.DataType.int32()),
+    ("category", daft.DataType.string()),
+    ("source", daft.DataType.string()),
+    ("n_faces", daft.DataType.int32()),
+    ("n_verts", daft.DataType.int32()),
+    ("faces", daft.DataType.list(daft.DataType.int32())),
+    ("vertices", daft.DataType.list(daft.DataType.float32())),
+    ("local_vertices", daft.DataType.list(daft.DataType.float32())),
+    ("local_vertices_nopca", daft.DataType.list(daft.DataType.float32())),
+    ("centroid", daft.DataType.list(daft.DataType.float32())),
+    ("principal_axes", daft.DataType.list(daft.DataType.float32())),
+    ("scale", daft.DataType.float32()),
+    ("boundary_vertices", daft.DataType.list(daft.DataType.int32())),
+    ("global_face_indices", daft.DataType.list(daft.DataType.int32())),
+])
 ```
+
+Note: `.tolist()` on a numpy float32 array produces Python `float` (64-bit). Without explicit schema, Daft infers `float64`, doubling storage. The `PATCH_SCHEMA` ensures true float32 Parquet columns. Usage: `daft.from_pydict(rows, schema=PATCH_SCHEMA)`.
 
 ### 4.4 Row Accumulation Pattern
 
