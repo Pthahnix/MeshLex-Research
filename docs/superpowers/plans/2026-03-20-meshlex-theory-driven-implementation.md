@@ -832,7 +832,7 @@ def main():
     parser.add_argument("--model", type=str, help="Path to trained model (for powerlaw mode)")
     parser.add_argument("--output", type=str, default="results/theory_experiments")
     parser.add_argument("--K-values", type=int, nargs="+",
-                        default=[32, 64, 128, 256, 512, 1024, 2048])
+                        default=[32, 64, 128, 256, 512, 1024, 2048, 4096])
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--device", type=str, default="cuda")
 
@@ -953,14 +953,95 @@ def compute_curvature_frequency_correlation(
 
 ```python
 # Add mode to scripts/run_theory_experiments.py
+from scipy import stats
 
-def run_curvature_correlation_analysis(args):
-    """Run curvature-frequency correlation analysis."""
-    # Load model and data
-    # For each patch: get token assignment and curvature
-    # Compute correlation statistics
-    # Generate table matching spec Section 4.3
-    pass
+def run_curvature_correlation_analysis(
+    model_path: str,
+    data_path: str,
+    output_dir: Path,
+    device: str = "cuda"
+):
+    """Run curvature-frequency correlation analysis.
+
+    Generates table matching spec Section 4.3:
+    - Top 10% (highest freq) → avg curvature ~0 (flat)
+    - Middle 40% → avg curvature small positive
+    - Bottom 50% → avg curvature large positive
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load model
+    checkpoint = torch.load(model_path, map_location=device)
+    model = MeshLexVQVAE(codebook_size=1024).to(device)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    model.eval()
+
+    # Load dataset
+    dataset = PatchDataset(data_path)
+
+    # Collect token assignments and patch curvatures
+    token_assignments = []
+    patch_curvatures = []
+
+    with torch.no_grad():
+        for i in tqdm(range(len(dataset)), desc="Collecting data"):
+            batch = dataset[i]
+
+            x = batch["x"].unsqueeze(0).to(device)
+            edge_index = batch["edge_index"].unsqueeze(0).to(device)
+            batch_idx = torch.zeros(1, dtype=torch.long, device=device)
+            n_vertices = batch["n_vertices"].unsqueeze(0).to(device)
+            gt_vertices = batch["gt_vertices"].unsqueeze(0).to(device)
+
+            # Get token assignment
+            output = model(x, edge_index, batch_idx, n_vertices, gt_vertices)
+            token_id = output["indices"].item()
+            token_assignments.append(token_id)
+
+            # Get patch curvature (from precomputed or compute on-the-fly)
+            if "curvature" in batch:
+                patch_curvatures.append(batch["curvature"].item())
+            else:
+                # Compute on-the-fly if not precomputed
+                mesh_path = dataset.metadata[i]["mesh_path"]
+                face_indices = dataset.metadata[i]["face_indices"]
+                mesh = trimesh.load(mesh_path)
+                K = compute_patch_curvature(mesh, face_indices)
+                patch_curvatures.append(K)
+
+    # Convert to arrays
+    token_assignments = np.array(token_assignments)
+    patch_curvatures = np.array(patch_curvatures)
+
+    # Compute token frequencies
+    n_tokens = model.codebook.K
+    token_frequencies = np.zeros(n_tokens)
+    for tok_id in token_assignments:
+        token_frequencies[tok_id] += 1
+
+    # Compute correlation
+    from src.theory_analysis import compute_curvature_frequency_correlation
+    results = compute_curvature_frequency_correlation(
+        token_frequencies, patch_curvatures, token_assignments
+    )
+
+    # Print results table
+    print("\n" + "=" * 60)
+    print("Curvature-Frequency Correlation Results")
+    print("=" * 60)
+    print(f"{'Token Rank':<20} {'Avg Curvature':<15}")
+    print("-" * 60)
+    print(f"{'Top 10% (highest freq)':<20} {results['top_10_avg_curvature']:<15.4f}")
+    print(f"{'Middle 40%':<20} {results['middle_40_avg_curvature']:<15.4f}")
+    print(f"{'Bottom 50%':<20} {results['bottom_50_avg_curvature']:<15.4f}")
+    print("-" * 60)
+    print(f"Spearman correlation: {results['spearman_correlation']:.4f}")
+
+    # Save results
+    with open(output_dir / "curvature_correlation_results.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    return results
 ```
 
 - [ ] **Step 3: Commit**
@@ -983,7 +1064,7 @@ git commit -m "feat: add curvature-frequency correlation analysis"
 # Add to scripts/run_theory_experiments.py
 
 def run_universality_experiment(
-    train_data_path: str,  # Objaverse
+    train_data_path: str,  # Objaverse (for reference)
     test_data_path: str,   # ShapeNet
     model_path: str,
     output_dir: Path,
@@ -995,12 +1076,93 @@ def run_universality_experiment(
     1. Load model trained on Objaverse
     2. Encode ShapeNet patches (zero fine-tuning)
     3. Compare power law exponents (α)
+    4. If α values are similar → evidence of universality
     """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     # Load Objaverse-trained model
-    # Encode ShapeNet patches
-    # Fit power law on ShapeNet token frequencies
-    # Compare α values
-    pass
+    print(f"Loading model from {model_path}")
+    checkpoint = torch.load(model_path, map_location=device)
+    model = MeshLexVQVAE(codebook_size=1024).to(device)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    model.eval()
+
+    # Load ShapeNet test data
+    print(f"Loading test data from {test_data_path}")
+    test_dataset = PatchDataset(test_data_path)
+
+    # Encode ShapeNet patches and count token frequencies
+    test_token_counts = {}
+
+    with torch.no_grad():
+        for i in tqdm(range(len(test_dataset)), desc="Encoding test patches"):
+            batch = test_dataset[i]
+            x = batch["x"].unsqueeze(0).to(device)
+            edge_index = batch["edge_index"].unsqueeze(0).to(device)
+            batch_idx = torch.zeros(1, dtype=torch.long, device=device)
+            n_vertices = batch["n_vertices"].unsqueeze(0).to(device)
+            gt_vertices = batch["gt_vertices"].unsqueeze(0).to(device)
+
+            output = model(x, edge_index, batch_idx, n_vertices, gt_vertices)
+            token_id = output["indices"].item()
+            test_token_counts[token_id] = test_token_counts.get(token_id, 0) + 1
+
+    # Fit power law on test data
+    test_frequencies = np.array(sorted(test_token_counts.values(), reverse=True))
+    test_alpha, test_r2 = fit_power_law(test_frequencies)
+
+    # Load training data power law (from checkpoint history or recompute)
+    train_alpha = checkpoint.get("power_law_alpha", None)
+    if train_alpha is None:
+        # Recpute from training data
+        train_dataset = PatchDataset(train_data_path)
+        train_token_counts = {}
+        with torch.no_grad():
+            for i in tqdm(range(len(train_dataset)), desc="Encoding train patches"):
+                batch = train_dataset[i]
+                x = batch["x"].unsqueeze(0).to(device)
+                edge_index = batch["edge_index"].unsqueeze(0).to(device)
+                batch_idx = torch.zeros(1, dtype=torch.long, device=device)
+                n_vertices = batch["n_vertices"].unsqueeze(0).to(device)
+                gt_vertices = batch["gt_vertices"].unsqueeze(0).to(device)
+                output = model(x, edge_index, batch_idx, n_vertices, gt_vertices)
+                token_id = output["indices"].item()
+                train_token_counts[token_id] = train_token_counts.get(token_id, 0) + 1
+        train_frequencies = np.array(sorted(train_token_counts.values(), reverse=True))
+        train_alpha, train_r2 = fit_power_law(train_frequencies)
+    else:
+        train_r2 = checkpoint.get("power_law_r2", 0)
+
+    # Compare
+    print("\n" + "=" * 60)
+    print("Universality Experiment Results")
+    print("=" * 60)
+    print(f"{'Dataset':<20} {'α':<10} {'R²':<10}")
+    print("-" * 60)
+    print(f"{'Objaverse (train)':<20} {train_alpha:<10.3f} {train_r2:<10.3f}")
+    print(f"{'ShapeNet (test)':<20} {test_alpha:<10.3f} {test_r2:<10.3f}")
+    print("-" * 60)
+
+    # Check universality criterion
+    alpha_diff = abs(test_alpha - train_alpha)
+    if alpha_diff < 0.2:
+        print(f"✓ α difference = {alpha_diff:.3f} < 0.2 → UNIVERSALITY SUPPORTED")
+    else:
+        print(f"✗ α difference = {alpha_diff:.3f} >= 0.2 → Universality NOT supported")
+
+    # Save results
+    results = {
+        "train_alpha": float(train_alpha),
+        "train_r2": float(train_r2),
+        "test_alpha": float(test_alpha),
+        "test_r2": float(test_r2),
+        "alpha_difference": float(alpha_diff),
+        "universality_supported": alpha_diff < 0.2,
+    }
+    with open(output_dir / "universality_results.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    return results
 ```
 
 - [ ] **Step 2: Add universality mode to argparse**
@@ -1911,13 +2073,6 @@ Task 3 (Power Law) ────> Task 4 (RD Experiment)
 Task 8 (Lean4) ───────────────────────────────────> Paper writing
 
 Task 9 (Training) ────> Task 10 (Evaluation)
-```
-
-Task 3 (Power Law) ────> Task 4 (RD Experiment) ────> Task 8 (Evaluation)
-
-Task 6 (Lean4) ───────────────────────────────────> Paper writing
-
-Task 7 (Training) ────> Task 8 (Evaluation)
 ```
 
 ### Success Criteria
