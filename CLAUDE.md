@@ -310,3 +310,67 @@ nvidia-smi
       continue  # 已处理，跳过
   ```
 - 遇到 OOM 错误时，**优先降低 `--batch_size`**，不要直接加内存
+
+## 数据集 Pipeline 监控规范 — 重要
+
+### 监控系统
+
+项目配置了持久化监控系统，用于监督数据集处理 pipeline：
+
+| 脚本 | 功能 | 日志 |
+|------|------|------|
+| `scripts/disk_alert.py` | 磁盘 ≥ 80% 时发警告 | `/tmp/disk_alert.log` |
+| `scripts/monitor_pipeline.py` | 生成进度报告 | `/tmp/pipeline_monitor.log` |
+| `scripts/monitor_daemon.sh` | 后台守护进程 | `/tmp/monitor_daemon.log` |
+
+### 启动监控
+
+```bash
+export HF_TOKEN=your_token_here
+nohup /workspace/MeshLex-Research/scripts/monitor_daemon.sh > /tmp/monitor_daemon.log 2>&1 &
+```
+
+### 监控产出目录
+
+`results/dataset-pipeline/` 是用户监督 pipeline 运行状态的窗口，必须保持人类可读：
+
+- `REPORT.md` — 进度报告（必读）
+- `progress.png` — 进度可视化
+- `summary.json` — 统计数据
+- `sample_*.png` — 随机 mesh 可视化
+
+### 磁盘预警响应
+
+当磁盘使用率 ≥ 80% 时，立即清理 Objaverse GLB 缓存：
+
+```bash
+# 清理 >30 分钟的旧 GLB
+python3 - <<'PY'
+from pathlib import Path
+import time
+cache_dir = Path.home() / ".objaverse" / "hf-objaverse-v1" / "glbs"
+if cache_dir.exists():
+    now = time.time()
+    for f in cache_dir.rglob("*.glb"):
+        if now - f.stat().st_mtime > 1800:
+            f.unlink()
+PY
+```
+
+### 新产出立即提交
+
+**强制规则**：一旦 `results/dataset-pipeline/` 有新产出，立即 commit and push：
+
+```bash
+git add results/dataset-pipeline/
+git commit -m "chore: update pipeline monitoring"
+git push
+```
+
+### Phase 完成后更新 Timeline
+
+当一个主要 phase 完成后，在 `README.md` Timeline 中添加条目：
+
+```
+- **Day N (YYYY-MM-DD)**: 完成内容摘要
+```
