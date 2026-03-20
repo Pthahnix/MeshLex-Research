@@ -1,17 +1,17 @@
 # Dataset Pipeline Progress Report
 
-**Generated:** 2026-03-20 21:34:23
+**Generated:** 2026-03-20 21:49:21
 
 ## Overall
-- Total meshes processed: 21112 OK / 9388 fail
-- Total patches: 2,985,440
+- Total meshes processed: 21463 OK / 9537 fail
+- Total patches: 3,040,104
 
 ## Objaverse-LVIS (Phase 1)
-- Batches: 61 / 93 completed
-- Meshes: 21112 OK / 9388 fail
+- Batches: 62 / 93 completed
+- Meshes: 21463 OK / 9537 fail
 - Success rate: 69.2%
-- Patches: 2,985,440
-- Avg patches/mesh: 141.4
+- Patches: 3,040,104
+- Avg patches/mesh: 141.6
 
 ## ShapeNet (Phase 2)
 - Batches: 0 completed
@@ -21,5 +21,5 @@
 
 ## Disk Usage
 - Total: 80GB
-- Used: 16GB
-- Free: 63GB
+- Used: 15GB
+- Free: 64GB
