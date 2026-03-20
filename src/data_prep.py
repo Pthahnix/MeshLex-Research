@@ -38,7 +38,7 @@ def load_and_preprocess_mesh(
         return None
 
     # Skip meshes where decimation failed (e.g. non-manifold Objaverse GLBs)
-    if mesh.faces.shape[0] > target_faces * 5:
+    if mesh.faces.shape[0] > target_faces * 25:
         return None
 
     # Normalize: center at origin, scale to [-1, 1]
