@@ -166,6 +166,11 @@ results/                           # 实验结果 (committed)
 |------|------|------|
 | `Pthahnix/MeshLex-Patches` | 统一数据集 (Objaverse-LVIS + ShapeNet) | Parquet (via Daft) |
 
+**数据集结构:**
+- Parquet 行 = 一个 patch，包含 `mesh_id`, `patch_idx`, `category`, `source`, `vertices`, `faces`, `local_vertices` (PCA), `local_vertices_nopca`, `centroid`, `principal_axes`, `scale`, `boundary_vertices`, `global_face_indices`
+- 辅助文件: `metadata.json` (72,405 meshes), `splits.json` (seen_train=53,492 / seen_test=13,372 / unseen=5,541), `stats.json`
+- Dual normalization: PCA + noPCA 同时存储，Phase B/C 可直接选用
+
 ### v2 Results
 
 | 目录 | 内容 |

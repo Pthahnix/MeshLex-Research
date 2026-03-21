@@ -1,23 +1,41 @@
 {
-  "timestamp": "2026-03-21 12:35:48",
+  "timestamp": "2026-03-21 12:37:05",
   "objaverse": {
-    "completed": 94,
+    "completed": 93,
     "total_batches": 93,
-    "total_ok": 32297,
-    "total_fail": 14410,
-    "total_patches": 4638480,
+    "total_ok": 32136,
+    "total_fail": 14364,
+    "total_patches": 4619061,
     "success_rate": 69.1,
-    "avg_patches_per_mesh": 143.6
+    "avg_patches_per_mesh": 143.7
   },
   "shapenet": {
-    "completed": 0,
-    "total_ok": 0,
-    "total_fail": 0,
-    "total_patches": 0,
-    "success_rate": 0
+    "completed": 55,
+    "total_categories": 57,
+    "errors": 2,
+    "error_categories": ["bicycle (02834778)", "boat (02858304)"],
+    "total_ok": 40419,
+    "total_fail": 12053,
+    "total_patches": 6186952,
+    "success_rate": 77.0,
+    "avg_patches_per_mesh": 153.1
   },
-  "total_batches_done": 94,
-  "total_patches": 4638480,
-  "total_ok": 32297,
-  "total_fail": 14410
+  "combined": {
+    "total_ok": 72555,
+    "total_fail": 26417,
+    "total_patches": 10806013,
+    "success_rate": 73.3,
+    "avg_patches_per_mesh": 148.9,
+    "total_categories": 1172
+  },
+  "splits": {
+    "seen_train": 53492,
+    "seen_test": 13372,
+    "unseen": 5541,
+    "unseen_categories": 100,
+    "seed": 42,
+    "test_ratio": 0.2
+  },
+  "hf_dataset": "Pthahnix/MeshLex-Patches",
+  "pipeline_wall_time_hours": 8
 }
