@@ -76,3 +76,35 @@ def test_graph_dataset_and_loader(tmp_path):
     assert hasattr(batch, "gt_vertices") # (B, max_V, 3)
     assert hasattr(batch, "n_vertices")  # (B,)
     assert batch.gt_vertices.shape[0] == 4
+
+
+def test_patch_graph_dataset_nopca(tmp_path):
+    """PatchGraphDataset with use_nopca=True loads local_vertices_nopca."""
+    import numpy as np
+    verts_pca = np.random.randn(30, 3).astype(np.float32)
+    verts_nopca = np.random.randn(30, 3).astype(np.float32) * 2
+    faces = np.array([[0, 1, 2]], dtype=np.int64)
+    np.savez(tmp_path / "test_patch_000.npz",
+             local_vertices=verts_pca, local_vertices_nopca=verts_nopca,
+             faces=faces, boundary_vertices=np.array([0]))
+    from src.patch_dataset import PatchGraphDataset
+    ds_pca = PatchGraphDataset(str(tmp_path), use_nopca=False)
+    ds_nopca = PatchGraphDataset(str(tmp_path), use_nopca=True)
+    assert len(ds_pca) == 1
+    assert len(ds_nopca) == 1
+
+
+def test_mesh_sequence_dataset_rotation(tmp_path):
+    """MeshSequenceDataset with use_rotation=True produces 11-token sequences."""
+    import numpy as np
+    M = 5
+    np.savez(tmp_path / "test_sequence.npz",
+             centroids=np.random.randn(M, 3).astype(np.float32),
+             scales=np.random.rand(M).astype(np.float32) + 0.1,
+             tokens=np.random.randint(0, 1024, (M, 3)),
+             principal_axes=np.tile(np.eye(3), (M, 1, 1)).astype(np.float32))
+    from src.patch_dataset import MeshSequenceDataset
+    ds = MeshSequenceDataset(str(tmp_path), mode="rvq", max_seq_len=1430, use_rotation=True)
+    input_ids, target_ids = ds[0]
+    assert input_ids.shape == (1430,)
+    assert (input_ids[:54] != 0).any()

@@ -156,9 +156,10 @@ class PatchGraphDataset(Dataset):
 
     MAX_VERTICES = 128
 
-    def __init__(self, patch_dir: str):
+    def __init__(self, patch_dir: str, use_nopca: bool = False):
         self.patch_dir = Path(patch_dir)
         self.files = sorted(self.patch_dir.glob("*.npz"))
+        self.use_nopca = use_nopca
 
     def __len__(self):
         return len(self.files)
@@ -166,7 +167,10 @@ class PatchGraphDataset(Dataset):
     def __getitem__(self, idx):
         data = np.load(str(self.files[idx]))
         faces = data["faces"]
-        local_verts = data["local_vertices"].astype(np.float32)
+        if self.use_nopca and "local_vertices_nopca" in data:
+            local_verts = data["local_vertices_nopca"].astype(np.float32)
+        else:
+            local_verts = data["local_vertices"].astype(np.float32)
 
         # Face features (F, 15)
         face_feats = compute_face_features(local_verts, faces)
@@ -209,24 +213,30 @@ class MeshSequenceDataset(Dataset):
     Each NPZ contains: centroids (M,3), scales (M,), tokens (M,) or (M,3)
     """
 
-    def __init__(self, sequence_dir: str, mode: str = "rvq", max_seq_len: int = 1024):
+    def __init__(self, sequence_dir: str, mode: str = "rvq", max_seq_len: int = 1024,
+                 use_rotation: bool = False):
         self.sequence_dir = Path(sequence_dir)
         self.files = sorted(self.sequence_dir.glob("*_sequence.npz"))
         self.mode = mode
         self.max_seq_len = max_seq_len
+        self.use_rotation = use_rotation
 
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, idx):
-        from src.patch_sequence import patches_to_token_sequence
-
         data = np.load(str(self.files[idx]))
         centroids = data["centroids"]
         scales = data["scales"]
         tokens = data["tokens"]
 
-        seq = patches_to_token_sequence(centroids, scales, tokens, mode=self.mode)
+        if self.use_rotation and "principal_axes" in data:
+            from src.patch_sequence import patches_to_token_sequence_rot
+            rotations = data["principal_axes"]
+            seq = patches_to_token_sequence_rot(centroids, scales, rotations, tokens)
+        else:
+            from src.patch_sequence import patches_to_token_sequence
+            seq = patches_to_token_sequence(centroids, scales, tokens, mode=self.mode)
 
         # Build input (pad with 0) and target (pad with -100) separately
         # Input = seq[:-1], Target = seq[1:] (teacher forcing)
