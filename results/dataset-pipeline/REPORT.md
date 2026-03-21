@@ -1,27 +1,30 @@
-# Dataset Pipeline Progress Report — ShapeNet Phase
+# Dataset Pipeline — COMPLETE
 
-**Generated:** 2026-03-21 11:48 UTC
+**Generated:** 2026-03-21 12:31 UTC
 
-## Overall Status
-- **Phase**: ShapeNet streaming (Phase D-2)
-- **Pipeline PID**: 249245 (running)
-- **Categories completed**: 52 / 55 (95%) — 50 OK, 2 errors
-- **Currently processing**: telephone (04401088) — 1089 models
+## Combined Statistics (Objaverse + ShapeNet)
 
-## Stats
-- Meshes OK: 37,757
-- Meshes fail: 10,996
-- Success rate: 77.4%
-- Total patches: 5,639,429
-- Avg patches/mesh: 149.4
+|                  | Objaverse    | ShapeNet     | Combined      |
+|------------------|-------------|-------------|---------------|
+| Meshes OK        | 32,136      | 40,419      | **72,555**    |
+| Meshes Fail      | 14,364      | 12,053      | 26,417        |
+| Success Rate     | 69.1%       | 77.0%       | **73.3%**     |
+| Total Patches    | 4,619,061   | 6,186,952   | **10,806,013**|
+| Avg Patches/Mesh | 143.7       | 153.1       | 148.9         |
+| Categories       | ~1000+      | 55 (53 ok)  | —             |
 
-## Disk Usage
-- Used: 15GB / 80GB (18%)
-- Free: 66GB
+## ShapeNet Details
+- **Categories**: 57 attempted → 55 successful, 2 errors (bicycle/boat: 404 on HF)
+- **Largest categories**: table (7,301 ok), chair (6,132 ok), sofa (2,716 ok)
+- **Lowest success rates**: car (14.0%), motorbike (22.8%), train (33.7%) — complex vehicle meshes
 
-## Timing
-- Pipeline started: 04:35 UTC (~7.2h elapsed)
-- Remaining: 3 categories (telephone, tower, train/watercraft/washer)
-- table completed: 7,301 ok, 1,135 fail, 672,078 patches (86.5% success)
-- 2 categories (bicycle, boat) 404 errors — zips not on HF
-- Objaverse phase (D-1) completed: 32,136 OK, 4,619,061 patches
+## Timeline
+- Pipeline started: 04:35 UTC
+- HF rate limit pause: 11:15–11:20 UTC (128 commits/hour, fixed with sub_batch_size=2000)
+- Pipeline completed: 12:31 UTC
+- **Total wall time: ~8 hours**
+
+## HF Dataset
+- Repo: `Pthahnix/MeshLex-Patches`
+- Format: Parquet (via Daft)
+- Dual normalization: PCA + noPCA stored per patch
