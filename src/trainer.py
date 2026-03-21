@@ -26,6 +26,7 @@ class Trainer:
         dead_code_interval: int = 10,
         encoder_warmup_epochs: int = 10,
         resume_checkpoint: dict = None,
+        use_bf16: bool = True,
     ):
         self.model = model.to(device)
         self.device = device
@@ -36,12 +37,17 @@ class Trainer:
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.start_epoch = 0
+        self.use_bf16 = use_bf16 and device != "cpu"
 
         self.train_loader = DataLoader(
-            train_dataset, batch_size=batch_size, shuffle=True, num_workers=8,
+            train_dataset, batch_size=batch_size, shuffle=True,
+            num_workers=8, pin_memory=True, persistent_workers=True,
+            prefetch_factor=2,
         )
         self.val_loader = (
-            DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
+            DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
+                       num_workers=4, pin_memory=True, persistent_workers=True,
+                       prefetch_factor=2)
             if val_dataset else None
         )
 
@@ -91,15 +97,15 @@ class Trainer:
             gt_verts = batch.gt_vertices
             n_verts = batch.n_vertices
 
-            result = self.model(
-                batch.x, batch.edge_index, batch.batch, n_verts, gt_verts,
-            )
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=self.use_bf16):
+                result = self.model(
+                    batch.x, batch.edge_index, batch.batch, n_verts, gt_verts,
+                )
 
-            if use_vq:
-                loss = result["total_loss"]
-            else:
-                # Encoder warmup: only recon loss, let encoder learn representations
-                loss = result["recon_loss"]
+                if use_vq:
+                    loss = result["total_loss"]
+                else:
+                    loss = result["recon_loss"]
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -234,7 +240,8 @@ class Trainer:
 
         for batch in loader:
             batch = batch.to(self.device)
-            result = self.model(
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=self.use_bf16):
+                result = self.model(
                 batch.x, batch.edge_index, batch.batch,
                 batch.n_vertices, batch.gt_vertices,
             )

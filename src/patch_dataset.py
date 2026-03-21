@@ -203,6 +203,68 @@ class PatchData(_PyGData):
         return super().__cat_dim__(key, value, *args, **kw)
 
 
+class ParquetPatchDataset(Dataset):
+    """PyG-compatible dataset reading directly from local Parquet files.
+
+    Uses HuggingFace datasets library with Arrow memory-mapping for efficiency.
+    Avoids creating millions of individual NPZ files.
+    """
+
+    MAX_VERTICES = 128
+
+    def __init__(self, parquet_dir: str, use_nopca: bool = False,
+                 split_mesh_ids: set = None):
+        """
+        Args:
+            parquet_dir: Directory containing *.parquet files.
+            use_nopca: If True, use local_vertices_nopca instead of local_vertices.
+            split_mesh_ids: If given, only include patches from these mesh IDs.
+        """
+        from datasets import load_dataset as hf_load
+        self.use_nopca = use_nopca
+
+        parquet_files = sorted(str(f) for f in Path(parquet_dir).glob("*.parquet"))
+        if not parquet_files:
+            raise FileNotFoundError(f"No parquet files in {parquet_dir}")
+
+        self._ds = hf_load("parquet", data_files=parquet_files, split="train")
+
+        if split_mesh_ids is not None:
+            self._ds = self._ds.filter(
+                lambda row: row["mesh_id"] in split_mesh_ids,
+                num_proc=4,
+            )
+
+    def __len__(self):
+        return len(self._ds)
+
+    def __getitem__(self, idx):
+        row = self._ds[idx]
+
+        n_verts = row.get("n_verts", 30)
+        n_faces = row.get("n_faces", 20)
+        faces = np.array(row["faces"], dtype=np.int64).reshape(-1, 3)[:n_faces]
+
+        if self.use_nopca and row.get("local_vertices_nopca"):
+            local_verts = np.array(row["local_vertices_nopca"], dtype=np.float32).reshape(-1, 3)[:n_verts]
+        else:
+            local_verts = np.array(row["local_vertices"], dtype=np.float32).reshape(-1, 3)[:n_verts]
+
+        face_feats = compute_face_features(local_verts, faces)
+        edge_index = build_face_edge_index(faces)
+
+        padded_verts = np.zeros((self.MAX_VERTICES, 3), dtype=np.float32)
+        padded_verts[:n_verts] = local_verts
+
+        return PatchData(
+            x=torch.tensor(face_feats, dtype=torch.float32),
+            edge_index=torch.tensor(edge_index, dtype=torch.long),
+            gt_vertices=torch.tensor(padded_verts, dtype=torch.float32),
+            n_vertices=torch.tensor(n_verts, dtype=torch.long),
+            n_faces=torch.tensor(n_faces, dtype=torch.long),
+        )
+
+
 class MeshSequenceDataset(Dataset):
     """Dataset that returns full-mesh patch token sequences for AR training.
 

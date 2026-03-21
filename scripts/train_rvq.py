@@ -1,11 +1,19 @@
 """Train MeshLex RVQ-VAE on preprocessed patches.
 
 Usage:
+    # From NPZ directories (original):
     python scripts/train_rvq.py \
         --train_dirs data/patches/lvis_wide/seen_train \
         --val_dirs data/patches/lvis_wide/seen_test \
         --checkpoint_dir data/checkpoints/rvq_lvis \
         --epochs 200 --batch_size 256
+
+    # From Parquet (full-scale):
+    python scripts/train_rvq.py \
+        --parquet_dir /data/pthahnix/MeshLex-Research/datasets/MeshLex-Patches/data \
+        --splits_json data/splits.json \
+        --checkpoint_dir data/checkpoints/rvq_full_pca \
+        --epochs 100 --batch_size 1024
 """
 import argparse
 import json
@@ -21,8 +29,13 @@ from src.trainer import Trainer
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_dirs", nargs="+", required=True)
+    parser.add_argument("--train_dirs", nargs="+", default=None,
+                        help="NPZ patch directories for training")
     parser.add_argument("--val_dirs", nargs="+", default=None)
+    parser.add_argument("--parquet_dir", type=str, default=None,
+                        help="Parquet directory (alternative to --train_dirs)")
+    parser.add_argument("--splits_json", type=str, default=None,
+                        help="splits.json path (required with --parquet_dir)")
     parser.add_argument("--codebook_size", type=int, default=1024)
     parser.add_argument("--n_levels", type=int, default=3)
     parser.add_argument("--embed_dim", type=int, default=128)
@@ -40,15 +53,42 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    train_datasets = [PatchGraphDataset(d, use_nopca=args.nopca) for d in args.train_dirs]
-    train_dataset = ConcatDataset(train_datasets)
-    print(f"Training patches: {len(train_dataset)}")
+    if args.parquet_dir:
+        from src.patch_dataset import ParquetPatchDataset
+        # Load splits
+        splits_path = args.splits_json
+        if splits_path is None:
+            # Try to download from HF
+            from src.parquet_loader import download_splits_json
+            splits_path = "data/splits.json"
+            download_splits_json(output_path=splits_path)
 
-    val_dataset = None
-    if args.val_dirs:
-        val_datasets = [PatchGraphDataset(d, use_nopca=args.nopca) for d in args.val_dirs]
-        val_dataset = ConcatDataset(val_datasets)
-        print(f"Validation patches: {len(val_dataset)}")
+        with open(splits_path) as f:
+            splits = json.load(f)
+
+        train_mesh_ids = set(splits["seen_train"])
+        train_dataset = ParquetPatchDataset(
+            args.parquet_dir, use_nopca=args.nopca, split_mesh_ids=train_mesh_ids)
+        print(f"Training patches (parquet): {len(train_dataset)}")
+
+        val_dataset = None
+        if "seen_test" in splits:
+            val_mesh_ids = set(splits["seen_test"])
+            val_dataset = ParquetPatchDataset(
+                args.parquet_dir, use_nopca=args.nopca, split_mesh_ids=val_mesh_ids)
+            print(f"Validation patches (parquet): {len(val_dataset)}")
+    elif args.train_dirs:
+        train_datasets = [PatchGraphDataset(d, use_nopca=args.nopca) for d in args.train_dirs]
+        train_dataset = ConcatDataset(train_datasets)
+        print(f"Training patches: {len(train_dataset)}")
+
+        val_dataset = None
+        if args.val_dirs:
+            val_datasets = [PatchGraphDataset(d, use_nopca=args.nopca) for d in args.val_dirs]
+            val_dataset = ConcatDataset(val_datasets)
+            print(f"Validation patches: {len(val_dataset)}")
+    else:
+        raise ValueError("Must specify either --train_dirs or --parquet_dir")
 
     model = MeshLexRVQVAE(
         codebook_size=args.codebook_size,
