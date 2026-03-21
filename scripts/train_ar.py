@@ -18,7 +18,7 @@ import gc
 
 from src.ar_model import PatchGPT
 from src.patch_dataset import MeshSequenceDataset
-from src.patch_sequence import compute_vocab_size
+from src.patch_sequence import compute_vocab_size, compute_vocab_size_rot
 
 
 def main():
@@ -39,6 +39,8 @@ def main():
                         help="Gradient accumulation steps (effective batch = batch_size * this)")
     parser.add_argument("--warmup_epochs", type=int, default=10,
                         help="Linear LR warmup epochs before cosine decay")
+    parser.add_argument("--rotation", action="store_true",
+                        help="Use 11-token rotation format (pos+scale+rot_quat+codebook)")
     parser.add_argument("--resume", type=str, default=None)
     args = parser.parse_args()
 
@@ -46,12 +48,19 @@ def main():
     ckpt_dir = Path(args.checkpoint_dir)
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset = MeshSequenceDataset(args.sequence_dir, mode=args.mode, max_seq_len=args.max_seq_len)
+    dataset = MeshSequenceDataset(args.sequence_dir, mode=args.mode, max_seq_len=args.max_seq_len,
+                                  use_rotation=args.rotation)
     print(f"Sequences: {len(dataset)}")
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
-    vocab_size = compute_vocab_size(codebook_K=args.codebook_size)
-    print(f"Vocab size: {vocab_size} (codebook K={args.codebook_size})")
+    if args.rotation:
+        vocab_size = compute_vocab_size_rot(codebook_K=args.codebook_size)
+        tokens_per_patch = 11
+    else:
+        vocab_size = compute_vocab_size(codebook_K=args.codebook_size)
+        tokens_per_patch = 7
+    print(f"Vocab size: {vocab_size} (codebook K={args.codebook_size}, rotation={args.rotation}, "
+          f"tokens_per_patch={tokens_per_patch})")
 
     model = PatchGPT(
         vocab_size=vocab_size,
@@ -90,6 +99,8 @@ def main():
         "n_heads": args.n_heads,
         "n_layers": args.n_layers,
         "max_seq_len": args.max_seq_len,
+        "rotation": args.rotation,
+        "tokens_per_patch": tokens_per_patch,
     }
 
     if args.resume:

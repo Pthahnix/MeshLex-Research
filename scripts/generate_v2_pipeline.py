@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.ar_model import PatchGPT
 from src.model_rvq import MeshLexRVQVAE
-from src.patch_sequence import compute_vocab_size
+from src.patch_sequence import compute_vocab_size, compute_vocab_size_rot
 
 
 def decode_token_sequence(sequence, n_pos_bins=256, n_scale_bins=64):
@@ -68,7 +68,47 @@ def decode_token_sequence(sequence, n_pos_bins=256, n_scale_bins=64):
     return patches
 
 
-def viz_token_sequence(seq_np, mesh_dir, mesh_idx):
+def decode_sequence_to_patches_rot(sequence, n_pos_bins=256, n_scale_bins=64, n_rot_bins=64):
+    """Decode flat token sequence back to patch parameters (rotation mode, 11 tokens/patch).
+
+    Token format per patch:
+        pos_x, pos_y, pos_z, scale, rot_qx, rot_qy, rot_qz, rot_qw, tok1, tok2, tok3
+    """
+    tokens_per_patch = 11
+    off_y = n_pos_bins
+    off_z = 2 * n_pos_bins
+    off_scale = 3 * n_pos_bins
+    off_rot = off_scale + n_scale_bins
+    off_code = off_rot + 4 * n_rot_bins
+
+    n_patches = len(sequence) // tokens_per_patch
+    patches = []
+
+    for i in range(n_patches):
+        base = i * tokens_per_patch
+        pos_x = int(sequence[base + 0])
+        pos_y = int(sequence[base + 1]) - off_y
+        pos_z = int(sequence[base + 2]) - off_z
+        scale_tok = int(sequence[base + 3]) - off_scale
+        rot_qx = int(sequence[base + 4]) - off_rot
+        rot_qy = int(sequence[base + 5]) - off_rot - n_rot_bins
+        rot_qz = int(sequence[base + 6]) - off_rot - 2 * n_rot_bins
+        rot_qw = int(sequence[base + 7]) - off_rot - 3 * n_rot_bins
+        tok1 = int(sequence[base + 8]) - off_code
+        tok2 = int(sequence[base + 9]) - off_code
+        tok3 = int(sequence[base + 10]) - off_code
+        patches.append({
+            "pos": [pos_x, pos_y, pos_z],
+            "scale": scale_tok,
+            "rot_bins": [rot_qx, rot_qy, rot_qz, rot_qw],
+            "tokens": [tok1, tok2, tok3],
+            "raw_tokens": [int(sequence[base + j]) for j in range(11)],
+        })
+
+    return patches
+
+
+def viz_token_sequence(seq_np, mesh_dir, mesh_idx, tokens_per_patch=7):
     """Stage 1: Visualize raw token sequence as heatmap."""
     fig, axes = plt.subplots(2, 1, figsize=(16, 6))
 
@@ -81,16 +121,22 @@ def viz_token_sequence(seq_np, mesh_dir, mesh_idx):
     axes[0].axhline(y=832, color='g', linestyle='--', alpha=0.5, label='scale/code boundary')
     axes[0].legend(fontsize=8)
 
-    # Token sequence as 2D heatmap (reshape to 7-column for RVQ)
-    n_patches = len(seq_np) // 7
+    # Token sequence as 2D heatmap
+    n_patches = len(seq_np) // tokens_per_patch
     if n_patches > 0:
-        reshaped = seq_np[:n_patches * 7].reshape(n_patches, 7)
+        reshaped = seq_np[:n_patches * tokens_per_patch].reshape(n_patches, tokens_per_patch)
         im = axes[1].imshow(reshaped.T, aspect='auto', cmap='viridis')
         axes[1].set_xlabel("Patch index")
         axes[1].set_ylabel("Token slot")
-        axes[1].set_yticks(range(7))
-        axes[1].set_yticklabels(['pos_x', 'pos_y', 'pos_z', 'scale', 'cb_L1', 'cb_L2', 'cb_L3'])
-        axes[1].set_title(f"Token Heatmap ({n_patches} patches × 7 tokens)")
+        axes[1].set_yticks(range(tokens_per_patch))
+        if tokens_per_patch == 11:
+            labels = ['pos_x', 'pos_y', 'pos_z', 'scale',
+                       'rot_qx', 'rot_qy', 'rot_qz', 'rot_qw',
+                       'cb_L1', 'cb_L2', 'cb_L3']
+        else:
+            labels = ['pos_x', 'pos_y', 'pos_z', 'scale', 'cb_L1', 'cb_L2', 'cb_L3']
+        axes[1].set_yticklabels(labels)
+        axes[1].set_title(f"Token Heatmap ({n_patches} patches x {tokens_per_patch} tokens)")
         plt.colorbar(im, ax=axes[1])
 
     plt.tight_layout()
@@ -150,11 +196,14 @@ def viz_patch_positions(patch_params, mesh_dir, mesh_idx):
     plt.close()
 
 
-def decode_patches_through_vqvae(patch_params, vqvae, device):
+def decode_patches_through_vqvae(patch_params, vqvae, device, use_rotation=False, n_rot_bins=64):
     """Stage 3: Decode each patch through VQ-VAE decoder, return local + world vertices."""
     all_local = []
     all_world = []
     all_z_hat = []
+
+    if use_rotation:
+        from src.rotation import dequantize_rotation
 
     for p in patch_params:
         with torch.no_grad():
@@ -168,7 +217,13 @@ def decode_patches_through_vqvae(patch_params, vqvae, device):
 
         pos = np.array(p["pos"], dtype=np.float32) / 255.0
         scale = max(p["scale"] / 63.0, 0.01)
-        world_verts = local_verts * scale + pos
+
+        if use_rotation and "rot_bins" in p:
+            rot_bins = np.array(p["rot_bins"], dtype=np.int32)
+            Vt = dequantize_rotation(rot_bins, n_rot_bins)  # (3, 3)
+            world_verts = (local_verts * scale) @ Vt + pos
+        else:
+            world_verts = local_verts * scale + pos
 
         all_local.append(local_verts)
         all_world.append(world_verts)
@@ -292,7 +347,8 @@ def viz_embedding_space(all_z_hat, mesh_dir, mesh_idx):
     plt.close()
 
 
-def create_summary_dashboard(mesh_dir, mesh_idx, patch_params, all_world, seq_np, gen_time):
+def create_summary_dashboard(mesh_dir, mesh_idx, patch_params, all_world, seq_np, gen_time,
+                             use_rotation=False):
     """Create a summary dashboard combining key stats."""
     n_patches = len(patch_params)
     n_points = sum(len(v) for v in all_world) if all_world else 0
@@ -302,7 +358,7 @@ def create_summary_dashboard(mesh_dir, mesh_idx, patch_params, all_world, seq_np
 
     # Compute token statistics
     unique_tokens = len(np.unique(seq_np))
-    vocab_size = compute_vocab_size()
+    vocab_size = compute_vocab_size_rot() if use_rotation else compute_vocab_size()
 
     stats = {
         "mesh_idx": mesh_idx,
@@ -355,6 +411,8 @@ def main():
     parser.add_argument("--top_k", type=int, default=50)
     parser.add_argument("--max_len", type=int, default=910)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--rotation", action="store_true",
+                        help="Use 11-token rotation decode (requires rotation-trained AR model)")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -378,6 +436,11 @@ def main():
     ar_model.eval()
     n_params = sum(p.numel() for p in ar_model.parameters())
     print(f"  AR model: {n_params/1e6:.1f}M params, config={ar_config}")
+
+    # Auto-detect rotation from AR checkpoint config
+    use_rotation = args.rotation or ar_config.get("rotation", False)
+    tokens_per_patch = 11 if use_rotation else 7
+    print(f"  Rotation mode: {use_rotation} ({tokens_per_patch} tokens/patch)")
 
     # Load VQ-VAE
     print("Loading RVQ VQ-VAE...")
@@ -418,10 +481,13 @@ def main():
             np.savez(mesh_dir / "raw_sequence.npz", sequence=seq_np)
 
             # Visualize Stage 1
-            viz_token_sequence(seq_np, mesh_dir, mesh_idx)
+            viz_token_sequence(seq_np, mesh_dir, mesh_idx, tokens_per_patch=tokens_per_patch)
 
             # Stage 2: Decode token sequence to patch parameters
-            patch_params = decode_token_sequence(seq_np)
+            if use_rotation:
+                patch_params = decode_sequence_to_patches_rot(seq_np)
+            else:
+                patch_params = decode_token_sequence(seq_np)
             print(f"    Decoded {len(patch_params)} patches")
 
             # Visualize Stage 2
@@ -430,7 +496,7 @@ def main():
             # Stage 3: Decode patches through VQ-VAE
             if patch_params:
                 all_local, all_world, all_z_hat = decode_patches_through_vqvae(
-                    patch_params, vqvae, device
+                    patch_params, vqvae, device, use_rotation=use_rotation
                 )
                 print(f"    Decoded {len(all_world)} patches → {sum(len(v) for v in all_world)} points")
 
@@ -450,7 +516,8 @@ def main():
 
             # Summary
             stats = create_summary_dashboard(
-                mesh_dir, mesh_idx, patch_params, all_world, seq_np, gen_time
+                mesh_dir, mesh_idx, patch_params, all_world, seq_np, gen_time,
+                use_rotation=use_rotation
             )
             stats["temperature"] = temp
             all_stats.append(stats)
