@@ -141,12 +141,8 @@ results/                           # 实验结果 (committed)
 | Phase 3 | AR 训练 | COMPLETE (v2) | v1: loss 5.41 (87.3M params, 太大) → v2: loss 1.48, ppl 4.4 (20.4M params) |
 | Phase 4 | Generation Pipeline | COMPLETE | 40 meshes generated, surface recon via Ball Pivoting |
 | Phase D-1 | Objaverse Streaming | **COMPLETE** | 93 batches, 32,136 OK / 14,364 fail, 4,619,061 patches |
-
-**当前进行中:**
-
-| Phase | 内容 | 状态 | 备注 |
-|-------|------|------|------|
-| Phase D-2 | ShapeNet Streaming | PENDING | 待启动 |
+| Phase D-2 | ShapeNet Streaming | **COMPLETE** | 55 categories, 40,419 OK / 12,053 fail, 6,186,952 patches |
+| Phase D-3 | Train/Test/Unseen Splits | **COMPLETE** | seen_train=53,492, seen_test=13,372, unseen=5,541 |
 
 **待完成:**
 
