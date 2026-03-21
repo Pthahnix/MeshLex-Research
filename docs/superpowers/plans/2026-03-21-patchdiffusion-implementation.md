@@ -791,12 +791,14 @@ import numpy as np
 
 
 def create_mock_dataset(path: Path, n_meshes: int = 20):
-    """Create mock NPZ files for training."""
+    """Create mock NPZ files matching encode_sequences.py format."""
     path.mkdir(parents=True, exist_ok=True)
     for i in range(n_meshes):
         n_patches = np.random.randint(20, 80)
-        tokens = np.random.randint(0, 2000, (n_patches, 7))
-        np.savez(path / f"mesh_{i:04d}.npz", tokens=tokens)
+        centroids = np.random.randn(n_patches, 3).astype(np.float32)
+        scales = np.random.rand(n_patches).astype(np.float32)
+        tokens = np.random.randint(0, 1024, (n_patches, 3))  # RVQ: 3 codebook indices
+        np.savez(path / f"mesh_{i:04d}_sequence.npz", centroids=centroids, scales=scales, tokens=tokens)
 
 
 def test_train_mdlm_help():
@@ -1993,12 +1995,14 @@ import torch
 
 
 def create_mock_sequences(path: Path, n_meshes: int = 30):
-    """Create mock token sequences."""
+    """Create mock NPZ files matching encode_sequences.py format."""
     path.mkdir(parents=True, exist_ok=True)
     for i in range(n_meshes):
         n_patches = np.random.randint(20, 80)
-        tokens = np.random.randint(0, 2000, (n_patches, 7))
-        np.savez(path / f"mesh_{i:04d}.npz", tokens=tokens)
+        centroids = np.random.randn(n_patches, 3).astype(np.float32)
+        scales = np.random.rand(n_patches).astype(np.float32)
+        tokens = np.random.randint(0, 1024, (n_patches, 3))  # RVQ: 3 codebook indices
+        np.savez(path / f"mesh_{i:04d}_sequence.npz", centroids=centroids, scales=scales, tokens=tokens)
 
 
 def test_full_pipeline():
@@ -2020,7 +2024,6 @@ def test_full_pipeline():
                 "--sequence_dir", str(seq_dir),
                 "--checkpoint_dir", str(ckpt_dir),
                 "--mode", "rvq",
-                "--variant", "pure",
                 "--epochs", "1",
                 "--batch_size", "4",
                 "--n_layers", "1",
