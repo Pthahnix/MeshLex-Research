@@ -2,7 +2,7 @@
 import numpy as np
 import trimesh
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Sampler
 from pathlib import Path
 
 from torch_geometric.data import Data as _PyGData
@@ -363,9 +363,12 @@ class MmapPatchDataset(Dataset):
 
     Created by scripts/precompute_features.py. Returns PatchData objects compatible
     with the PyG DataLoader and existing Trainer.
+
+    When RAM is limited (mmap random access is slow), use load_chunk() to pre-load
+    a contiguous slice into RAM for fast random access within the chunk.
     """
 
-    def __init__(self, feature_dir: str):
+    def __init__(self, feature_dir: str, chunk_size: int = 0):
         self.feature_dir = Path(feature_dir)
         self._feats = np.load(str(self.feature_dir / "face_features.npy"), mmap_mode="r")
         self._edges = np.load(str(self.feature_dir / "edge_index.npy"), mmap_mode="r")
@@ -373,19 +376,57 @@ class MmapPatchDataset(Dataset):
         self._n_verts = np.load(str(self.feature_dir / "n_vertices.npy"), mmap_mode="r")
         self._n_faces = np.load(str(self.feature_dir / "n_faces.npy"), mmap_mode="r")
         self._n_edges = np.load(str(self.feature_dir / "n_edges.npy"), mmap_mode="r")
+        self._total = len(self._n_verts)
+
+        # Chunk state (for low-RAM environments)
+        self._chunk_size = chunk_size
+        self._chunk_offset = 0
+        self._chunk_feats = None
+        self._chunk_edges = None
+        self._chunk_verts = None
+        self._chunk_nv = None
+        self._chunk_nf = None
+        self._chunk_ne = None
+
+        if chunk_size > 0:
+            self.load_chunk(0)
+
+    @property
+    def total_samples(self):
+        return self._total
+
+    def load_chunk(self, chunk_idx: int):
+        """Load a contiguous chunk into RAM for fast random access."""
+        start = chunk_idx * self._chunk_size
+        end = min(start + self._chunk_size, self._total)
+        self._chunk_offset = start
+        self._chunk_feats = self._feats[start:end].copy()
+        self._chunk_edges = self._edges[start:end].copy()
+        self._chunk_verts = self._verts[start:end].copy()
+        self._chunk_nv = self._n_verts[start:end].copy()
+        self._chunk_nf = self._n_faces[start:end].copy()
+        self._chunk_ne = self._n_edges[start:end].copy()
 
     def __len__(self):
-        return len(self._n_verts)
+        if self._chunk_size > 0 and self._chunk_nf is not None:
+            return len(self._chunk_nf)
+        return self._total
 
     def __getitem__(self, idx):
-        n_faces = int(self._n_faces[idx])
-        n_edges = int(self._n_edges[idx])
-
-        # Read pre-computed arrays (already padded)
-        x = torch.from_numpy(self._feats[idx, :n_faces].copy())
-        edge_index = torch.from_numpy(self._edges[idx, :, :n_edges].copy())
-        gt_vertices = torch.from_numpy(self._verts[idx].copy())
-        n_vertices = torch.tensor(int(self._n_verts[idx]), dtype=torch.long)
+        if self._chunk_size > 0 and self._chunk_nf is not None:
+            n_faces = int(self._chunk_nf[idx])
+            n_edges = int(self._chunk_ne[idx])
+            x = torch.from_numpy(self._chunk_feats[idx, :n_faces].copy())
+            edge_index = torch.from_numpy(self._chunk_edges[idx, :, :n_edges].copy())
+            gt_vertices = torch.from_numpy(self._chunk_verts[idx].copy())
+            n_vertices = torch.tensor(int(self._chunk_nv[idx]), dtype=torch.long)
+        else:
+            n_faces = int(self._n_faces[idx])
+            n_edges = int(self._n_edges[idx])
+            x = torch.from_numpy(self._feats[idx, :n_faces].copy())
+            edge_index = torch.from_numpy(self._edges[idx, :, :n_edges].copy())
+            gt_vertices = torch.from_numpy(self._verts[idx].copy())
+            n_vertices = torch.tensor(int(self._n_verts[idx]), dtype=torch.long)
 
         return PatchData(
             x=x.float(),
@@ -394,3 +435,126 @@ class MmapPatchDataset(Dataset):
             n_vertices=n_vertices,
             n_faces=torch.tensor(n_faces, dtype=torch.long),
         )
+
+
+class ChunkBatchIterator:
+    """Fast batch iterator that bypasses PyG DataLoader overhead.
+
+    Creates PyG-compatible Batch objects directly from chunk arrays
+    using vectorized numpy/torch operations instead of Python-level collation.
+    """
+
+    def __init__(self, dataset: 'MmapPatchDataset', batch_size: int = 1024,
+                 shuffle: bool = True, device: str = 'cpu'):
+        assert dataset._chunk_nf is not None, "Must call load_chunk() first"
+        self.ds = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.device = device
+        self.n = len(dataset)
+
+    def __len__(self):
+        return (self.n + self.batch_size - 1) // self.batch_size
+
+    def __iter__(self):
+        indices = np.random.permutation(self.n) if self.shuffle else np.arange(self.n)
+
+        for start in range(0, self.n, self.batch_size):
+            batch_idx = indices[start:start + self.batch_size]
+            B = len(batch_idx)
+
+            nf = self.ds._chunk_nf[batch_idx].astype(np.int64)  # (B,)
+            ne = self.ds._chunk_ne[batch_idx].astype(np.int64)  # (B,)
+            nv = self.ds._chunk_nv[batch_idx]  # (B,)
+
+            # Face offsets for edge_index adjustment
+            face_offsets = np.zeros(B + 1, dtype=np.int64)
+            np.cumsum(nf, out=face_offsets[1:])
+            total_faces = int(face_offsets[-1])
+            total_edges = int(ne.sum())
+
+            # Build flattened x: (total_faces, 15) — vectorized with fancy indexing
+            max_f = int(nf.max())
+            feats_block = self.ds._chunk_feats[batch_idx, :max_f]  # (B, max_f, 15)
+            # Create mask for valid faces
+            face_range = np.arange(max_f)
+            valid_mask = face_range[None, :] < nf[:, None]  # (B, max_f)
+            x = torch.from_numpy(feats_block[valid_mask].copy()).float()
+
+            # Build batch vector
+            batch_vec = torch.from_numpy(np.repeat(np.arange(B, dtype=np.int64), nf))
+
+            # Build edge_index: (2, total_edges) — vectorized
+            if total_edges > 0:
+                max_e = int(ne.max())
+                edges_block = self.ds._chunk_edges[batch_idx, :, :max_e]  # (B, 2, max_e)
+                edge_range = np.arange(max_e)
+                edge_valid = edge_range[None, :] < ne[:, None]  # (B, max_e)
+                # Flatten and offset
+                src_block = edges_block[:, 0, :]  # (B, max_e)
+                dst_block = edges_block[:, 1, :]  # (B, max_e)
+                offsets_per_edge = np.repeat(face_offsets[:B], ne)  # broadcast offset per edge
+                src_flat = src_block[edge_valid] + offsets_per_edge
+                dst_flat = dst_block[edge_valid] + offsets_per_edge
+                ei = torch.from_numpy(np.stack([src_flat, dst_flat])).long()
+            else:
+                ei = torch.zeros(2, 0, dtype=torch.long)
+
+            gt_v = torch.from_numpy(self.ds._chunk_verts[batch_idx].copy()).float()
+            n_vertices = torch.from_numpy(nv.copy()).long()
+            n_faces_t = torch.from_numpy(nf.copy()).long()
+
+            yield _BatchData(
+                x=x.to(self.device),
+                edge_index=ei.to(self.device),
+                batch=batch_vec.to(self.device),
+                gt_vertices=gt_v.to(self.device),
+                n_vertices=n_vertices.to(self.device),
+                n_faces=n_faces_t.to(self.device),
+            )
+
+
+class _BatchData:
+    """Lightweight batch container (avoids PyG Batch overhead)."""
+    __slots__ = ('x', 'edge_index', 'batch', 'gt_vertices', 'n_vertices', 'n_faces')
+
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def to(self, device):
+        # Already on device from iterator
+        return self
+
+
+class BlockShuffleSampler(Sampler):
+    """Sampler that shuffles data in blocks for mmap-friendly access.
+
+    Divides the dataset into contiguous blocks of `block_size` samples.
+    Each epoch: shuffles block order, then shuffles indices within each block.
+    This gives quasi-random access with sequential disk I/O patterns,
+    ideal for memory-mapped datasets that don't fit in page cache.
+    """
+
+    def __init__(self, data_source, block_size: int = 100_000):
+        self.n = len(data_source)
+        self.block_size = block_size
+
+    def __iter__(self):
+        # Create block boundaries
+        blocks = []
+        for start in range(0, self.n, self.block_size):
+            end = min(start + self.block_size, self.n)
+            block_indices = np.arange(start, end)
+            np.random.shuffle(block_indices)
+            blocks.append(block_indices)
+
+        # Shuffle block order
+        block_order = np.random.permutation(len(blocks))
+
+        # Yield indices: shuffled blocks, shuffled within each block
+        for bi in block_order:
+            yield from blocks[bi].tolist()
+
+    def __len__(self):
+        return self.n

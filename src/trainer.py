@@ -39,19 +39,48 @@ class Trainer:
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.start_epoch = 0
         self.use_bf16 = use_bf16 and device != "cpu"
+        self.batch_size = batch_size
+        self.num_workers = num_workers
 
-        self.train_loader = DataLoader(
-            train_dataset, batch_size=batch_size, shuffle=True,
-            num_workers=num_workers, pin_memory=True, persistent_workers=True,
-            prefetch_factor=4,
-        )
+        from src.patch_dataset import MmapPatchDataset
+        self._chunked = isinstance(train_dataset, MmapPatchDataset) and train_dataset._chunk_size > 0
+        self._train_dataset = train_dataset
+
+        if self._chunked:
+            # Chunked mmap: DataLoader created per-chunk in train_one_epoch
+            self.train_loader = None
+            n_chunks = (train_dataset.total_samples + train_dataset._chunk_size - 1) // train_dataset._chunk_size
+            print(f"  Chunked training: {train_dataset.total_samples} samples, "
+                  f"chunk_size={train_dataset._chunk_size}, {n_chunks} chunks/epoch")
+        elif isinstance(train_dataset, MmapPatchDataset):
+            from src.patch_dataset import BlockShuffleSampler
+            sampler = BlockShuffleSampler(train_dataset, block_size=100_000)
+            self.train_loader = DataLoader(
+                train_dataset, batch_size=batch_size, sampler=sampler,
+                num_workers=num_workers, pin_memory=True,
+                prefetch_factor=4 if num_workers > 0 else None,
+            )
+        else:
+            self.train_loader = DataLoader(
+                train_dataset, batch_size=batch_size, shuffle=True,
+                num_workers=num_workers, pin_memory=True, persistent_workers=True,
+                prefetch_factor=4,
+            )
         val_workers = max(4, num_workers // 2)
-        self.val_loader = (
-            DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
-                       num_workers=val_workers, pin_memory=True, persistent_workers=True,
-                       prefetch_factor=4)
-            if val_dataset else None
-        )
+        if val_dataset is not None:
+            if isinstance(val_dataset, MmapPatchDataset):
+                self.val_loader = DataLoader(
+                    val_dataset, batch_size=batch_size, shuffle=False,
+                    num_workers=val_workers, pin_memory=True,
+                    prefetch_factor=4 if val_workers > 0 else None,
+                )
+            else:
+                self.val_loader = DataLoader(
+                    val_dataset, batch_size=batch_size, shuffle=False,
+                    num_workers=val_workers, pin_memory=True, persistent_workers=True,
+                    prefetch_factor=4)
+        else:
+            self.val_loader = None
 
         self.optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -81,20 +110,15 @@ class Trainer:
             print(f"  Trainer resumed: starting from epoch {self.start_epoch}, "
                   f"history has {len(self.history)} entries")
 
-    def train_one_epoch(self, epoch: int):
-        self.model.train()
+    def _process_batches(self, loader, use_vq, all_indices, z_reservoir, max_z=200_000):
+        """Process all batches from a loader, accumulating metrics."""
         total_loss = 0
         total_recon = 0
         total_commit = 0
         total_embed = 0
         n_batches = 0
-        all_indices = []
-        all_z = []
 
-        # During encoder warmup, only use recon loss (encoder learns without VQ)
-        use_vq = epoch >= self.encoder_warmup_epochs
-
-        for batch in self.train_loader:
+        for batch in loader:
             batch = batch.to(self.device)
             gt_verts = batch.gt_vertices
             n_verts = batch.n_vertices
@@ -103,7 +127,6 @@ class Trainer:
                 result = self.model(
                     batch.x, batch.edge_index, batch.batch, n_verts, gt_verts,
                 )
-
                 if use_vq:
                     loss = result["total_loss"]
                 else:
@@ -118,31 +141,85 @@ class Trainer:
             total_recon += result["recon_loss"].item()
             total_commit += result["commit_loss"].item()
             total_embed += result["embed_loss"].item()
-            all_indices.append(result["indices"].detach().cpu())
-            # Collect z for codebook init and dead code revival
-            all_z.append(result["z"].detach().cpu())
+
+            idx = result["indices"].detach().cpu()
+            all_indices.append(idx)
+
+            # Reservoir sample z vectors (memory-bounded)
+            z = result["z"].detach().cpu()
+            z_reservoir.append(z)
+            # Trim if too large
+            total_z = sum(t.shape[0] for t in z_reservoir)
+            if total_z > max_z * 2:
+                combined = torch.cat(z_reservoir)
+                perm = torch.randperm(combined.shape[0])[:max_z]
+                z_reservoir.clear()
+                z_reservoir.append(combined[perm])
+
             n_batches += 1
+
+        return total_loss, total_recon, total_commit, total_embed, n_batches
+
+    def train_one_epoch(self, epoch: int):
+        self.model.train()
+        all_indices = []
+        z_reservoir = []
+        use_vq = epoch >= self.encoder_warmup_epochs
+
+        if self._chunked:
+            # Chunked mmap training: cycle through chunks
+            from src.patch_dataset import ChunkBatchIterator
+            ds = self._train_dataset
+            n_chunks = (ds.total_samples + ds._chunk_size - 1) // ds._chunk_size
+            chunk_order = np.random.permutation(n_chunks)
+            total_loss = total_recon = total_commit = total_embed = 0
+            n_batches = 0
+
+            for ci, chunk_idx in enumerate(chunk_order):
+                ds.load_chunk(int(chunk_idx))
+                loader = ChunkBatchIterator(
+                    ds, batch_size=self.batch_size, shuffle=True,
+                    device=self.device)
+                cl, cr, cc, ce, nb = self._process_batches(
+                    loader, use_vq, all_indices, z_reservoir)
+                total_loss += cl
+                total_recon += cr
+                total_commit += cc
+                total_embed += ce
+                n_batches += nb
+
+                if (ci + 1) % 10 == 0:
+                    print(f"    chunk {ci+1}/{n_chunks} done, "
+                          f"loss {total_loss/n_batches:.4f}")
+
+                del loader
+                gc.collect()
+        else:
+            total_loss, total_recon, total_commit, total_embed, n_batches = \
+                self._process_batches(
+                    self.train_loader, use_vq, all_indices, z_reservoir)
 
         self.scheduler.step()
 
-        # Codebook utilization (use first-level indices for RVQ compatibility)
+        # Codebook utilization
         all_idx = torch.cat(all_indices)
         if all_idx.dim() > 1:
-            all_idx_l0 = all_idx[:, 0]  # first RVQ level
+            all_idx_l0 = all_idx[:, 0]
         else:
             all_idx_l0 = all_idx
         utilization = all_idx_l0.unique().numel() / self.model.codebook.K
 
+        all_z = torch.cat(z_reservoir) if z_reservoir else torch.empty(0)
+
         # K-means codebook init at end of encoder warmup
         if epoch == self.encoder_warmup_epochs - 1 and self.encoder_warmup_epochs > 0:
-            self._init_codebook_from_z(torch.cat(all_z))
+            self._init_codebook_from_z(all_z)
 
-        # Dead code revival (only after VQ training starts)
+        # Dead code revival
         if use_vq and self.dead_code_interval > 0 and (epoch + 1) % self.dead_code_interval == 0:
-            self._revive_dead_codes(all_idx_l0, torch.cat(all_z))
+            self._revive_dead_codes(all_idx_l0, all_z)
 
-        # Free memory
-        del all_z
+        del all_z, z_reservoir, all_indices
         gc.collect()
         torch.cuda.empty_cache()
 

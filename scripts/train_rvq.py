@@ -55,14 +55,17 @@ def main():
                         help="VQ codebook method")
     parser.add_argument("--num_workers", type=int, default=8,
                         help="DataLoader num_workers")
+    parser.add_argument("--chunk_size", type=int, default=0,
+                        help="Chunk size for mmap dataset (0=disabled, use when RAM is limited)")
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if args.feature_dir:
         from src.patch_dataset import MmapPatchDataset
-        train_dataset = MmapPatchDataset(args.feature_dir)
-        print(f"Training patches (mmap): {len(train_dataset)}")
+        train_dataset = MmapPatchDataset(args.feature_dir, chunk_size=args.chunk_size)
+        print(f"Training patches (mmap): {train_dataset.total_samples}"
+              + (f" (chunk_size={args.chunk_size})" if args.chunk_size > 0 else ""))
         val_dataset = None
         if args.val_feature_dir:
             val_dataset = MmapPatchDataset(args.val_feature_dir)
