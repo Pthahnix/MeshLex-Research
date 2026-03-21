@@ -12,6 +12,8 @@ from src.patch_segment import segment_mesh_to_patches
 def compute_face_features(vertices: np.ndarray, faces: np.ndarray) -> np.ndarray:
     """Compute 15-dim face features: 9 vertex coords + 3 normal + 3 edge angles.
 
+    Fully vectorized — no Python loops.
+
     Args:
         vertices: (V, 3) local normalized vertex coordinates
         faces: (F, 3) face vertex indices
@@ -19,31 +21,46 @@ def compute_face_features(vertices: np.ndarray, faces: np.ndarray) -> np.ndarray
     Returns:
         (F, 15) feature array
     """
-    n_faces = faces.shape[0]
-    features = np.zeros((n_faces, 15), dtype=np.float32)
+    # Gather triangle vertices: (F, 3) each
+    p0 = vertices[faces[:, 0]]  # (F, 3)
+    p1 = vertices[faces[:, 1]]
+    p2 = vertices[faces[:, 2]]
 
-    for i, (v0, v1, v2) in enumerate(faces):
-        p0, p1, p2 = vertices[v0], vertices[v1], vertices[v2]
+    features = np.empty((faces.shape[0], 15), dtype=np.float32)
 
-        # 9 vertex coordinates (flattened)
-        features[i, :3] = p0
-        features[i, 3:6] = p1
-        features[i, 6:9] = p2
+    # 9 vertex coordinates (flattened)
+    features[:, 0:3] = p0
+    features[:, 3:6] = p1
+    features[:, 6:9] = p2
 
-        # Face normal
-        e1, e2 = p1 - p0, p2 - p0
-        normal = np.cross(e1, e2)
-        norm_len = np.linalg.norm(normal)
-        if norm_len > 1e-8:
-            normal /= norm_len
-        features[i, 9:12] = normal
+    # Face normals
+    e1 = p1 - p0  # (F, 3)
+    e2 = p2 - p0
+    normals = np.cross(e1, e2)  # (F, 3)
+    norm_len = np.linalg.norm(normals, axis=1, keepdims=True)  # (F, 1)
+    norm_len = np.maximum(norm_len, 1e-8)
+    features[:, 9:12] = normals / norm_len
 
-        # Edge angles (interior angles at each vertex)
-        edges = [p1 - p0, p2 - p1, p0 - p2]
-        for j in range(3):
-            a, b = -edges[j - 1], edges[j]
-            cos_angle = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8)
-            features[i, 12 + j] = np.arccos(np.clip(cos_angle, -1, 1))
+    # Edge vectors for angle computation
+    # edges: e01 = p1-p0, e12 = p2-p1, e20 = p0-p2
+    e01 = p1 - p0  # (F, 3)
+    e12 = p2 - p1
+    e20 = p0 - p2
+
+    # Interior angles: angle at v0 = angle between -e20 and e01
+    #                   angle at v1 = angle between -e01 and e12
+    #                   angle at v2 = angle between -e12 and e20
+    def _vec_angle(a, b):
+        """Vectorized angle between pairs of vectors."""
+        dot = np.sum(a * b, axis=1)  # (F,)
+        na = np.linalg.norm(a, axis=1)
+        nb = np.linalg.norm(b, axis=1)
+        cos = dot / (na * nb + 1e-8)
+        return np.arccos(np.clip(cos, -1.0, 1.0))
+
+    features[:, 12] = _vec_angle(-e20, e01)  # angle at v0
+    features[:, 13] = _vec_angle(-e01, e12)  # angle at v1
+    features[:, 14] = _vec_angle(-e12, e20)  # angle at v2
 
     return features
 
@@ -52,25 +69,47 @@ def build_face_edge_index(faces: np.ndarray) -> np.ndarray:
     """Build face adjacency edge_index (2, E) from face array.
 
     Two faces are adjacent if they share exactly 2 vertices (an edge).
+    Vectorized using numpy sorting + groupby.
     """
     n_faces = faces.shape[0]
-    edge_map: dict[tuple, list[int]] = {}
+    if n_faces == 0:
+        return np.zeros((2, 0), dtype=np.int64)
 
-    for fi in range(n_faces):
-        verts = sorted(faces[fi])
-        for i in range(3):
-            for j in range(i + 1, 3):
-                edge_key = (verts[i], verts[j])
-                edge_map.setdefault(edge_key, []).append(fi)
+    # Sort vertex indices within each face
+    sorted_faces = np.sort(faces, axis=1)  # (F, 3)
 
-    src, dst = [], []
-    for edge_key, face_list in edge_map.items():
-        if len(face_list) == 2:
-            f0, f1 = face_list
-            src.extend([f0, f1])
-            dst.extend([f1, f0])
+    # Extract all 3 edges per face: (v_lo, v_hi, face_idx)
+    # Edge pairs: (0,1), (0,2), (1,2)
+    face_ids = np.arange(n_faces)
+    edges = np.empty((n_faces * 3, 3), dtype=np.int64)
+    edges[0::3, 0] = sorted_faces[:, 0]
+    edges[0::3, 1] = sorted_faces[:, 1]
+    edges[0::3, 2] = face_ids
+    edges[1::3, 0] = sorted_faces[:, 0]
+    edges[1::3, 1] = sorted_faces[:, 2]
+    edges[1::3, 2] = face_ids
+    edges[2::3, 0] = sorted_faces[:, 1]
+    edges[2::3, 1] = sorted_faces[:, 2]
+    edges[2::3, 2] = face_ids
 
-    return np.array([src, dst], dtype=np.int64)
+    # Sort by (v_lo, v_hi) to group shared edges
+    order = np.lexsort((edges[:, 1], edges[:, 0]))
+    edges = edges[order]
+
+    # Find consecutive rows with same (v0, v1) — these share an edge
+    same = (edges[:-1, 0] == edges[1:, 0]) & (edges[:-1, 1] == edges[1:, 1])
+    idx = np.where(same)[0]
+
+    if len(idx) == 0:
+        return np.zeros((2, 0), dtype=np.int64)
+
+    f0 = edges[idx, 2]
+    f1 = edges[idx + 1, 2]
+
+    # Bidirectional
+    src = np.concatenate([f0, f1])
+    dst = np.concatenate([f1, f0])
+    return np.stack([src, dst], axis=0).astype(np.int64)
 
 
 def process_and_save_patches(
