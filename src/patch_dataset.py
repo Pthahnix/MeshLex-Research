@@ -204,36 +204,41 @@ class PatchData(_PyGData):
 
 
 class ParquetPatchDataset(Dataset):
-    """PyG-compatible dataset reading directly from local Parquet files.
+    """PyG-compatible dataset reading from Arrow datasets or Parquet files.
 
-    Uses HuggingFace datasets library with Arrow memory-mapping for efficiency.
-    Avoids creating millions of individual NPZ files.
+    Supports two modes:
+    1. Pre-computed Arrow: `arrow_dir` points to a datasets.save_to_disk() output
+    2. Raw Parquet: `parquet_dir` points to *.parquet files (slower first load)
     """
 
     MAX_VERTICES = 128
 
-    def __init__(self, parquet_dir: str, use_nopca: bool = False,
-                 split_mesh_ids: set = None):
+    def __init__(self, arrow_dir: str = None, parquet_dir: str = None,
+                 use_nopca: bool = False, split_mesh_ids: set = None):
         """
         Args:
-            parquet_dir: Directory containing *.parquet files.
-            use_nopca: If True, use local_vertices_nopca instead of local_vertices.
-            split_mesh_ids: If given, only include patches from these mesh IDs.
+            arrow_dir: Pre-computed Arrow dataset directory (fast load).
+            parquet_dir: Raw parquet files directory (needs filtering).
+            use_nopca: If True, use local_vertices_nopca.
+            split_mesh_ids: Filter by mesh IDs (only for parquet_dir mode).
         """
-        from datasets import load_dataset as hf_load
+        from datasets import load_from_disk, load_dataset as hf_load
         self.use_nopca = use_nopca
 
-        parquet_files = sorted(str(f) for f in Path(parquet_dir).glob("*.parquet"))
-        if not parquet_files:
-            raise FileNotFoundError(f"No parquet files in {parquet_dir}")
-
-        self._ds = hf_load("parquet", data_files=parquet_files, split="train")
-
-        if split_mesh_ids is not None:
-            self._ds = self._ds.filter(
-                lambda row: row["mesh_id"] in split_mesh_ids,
-                num_proc=4,
-            )
+        if arrow_dir and Path(arrow_dir).exists():
+            self._ds = load_from_disk(arrow_dir)
+        elif parquet_dir:
+            parquet_files = sorted(str(f) for f in Path(parquet_dir).glob("*.parquet"))
+            if not parquet_files:
+                raise FileNotFoundError(f"No parquet files in {parquet_dir}")
+            self._ds = hf_load("parquet", data_files=parquet_files, split="train")
+            if split_mesh_ids is not None:
+                self._ds = self._ds.filter(
+                    lambda batch: [mid in split_mesh_ids for mid in batch["mesh_id"]],
+                    batched=True, batch_size=10000, num_proc=4,
+                )
+        else:
+            raise ValueError("Must specify either arrow_dir or parquet_dir")
 
     def __len__(self):
         return len(self._ds)

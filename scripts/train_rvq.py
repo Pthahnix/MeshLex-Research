@@ -55,28 +55,48 @@ def main():
 
     if args.parquet_dir:
         from src.patch_dataset import ParquetPatchDataset
-        # Load splits
-        splits_path = args.splits_json
-        if splits_path is None:
-            # Try to download from HF
-            from src.parquet_loader import download_splits_json
-            splits_path = "data/splits.json"
-            download_splits_json(output_path=splits_path)
+        # Check for pre-computed Arrow splits first
+        arrow_base = args.parquet_dir.rstrip("/").replace("/data", "/splits")
+        if not Path(arrow_base).exists():
+            # Try standard location
+            arrow_base = str(Path(args.parquet_dir).parent / "splits")
 
-        with open(splits_path) as f:
-            splits = json.load(f)
+        train_arrow = Path(arrow_base) / "seen_train"
+        test_arrow = Path(arrow_base) / "seen_test"
 
-        train_mesh_ids = set(splits["seen_train"])
-        train_dataset = ParquetPatchDataset(
-            args.parquet_dir, use_nopca=args.nopca, split_mesh_ids=train_mesh_ids)
-        print(f"Training patches (parquet): {len(train_dataset)}")
+        if train_arrow.exists():
+            train_dataset = ParquetPatchDataset(
+                arrow_dir=str(train_arrow), use_nopca=args.nopca)
+            print(f"Training patches (arrow): {len(train_dataset)}")
+            val_dataset = None
+            if test_arrow.exists():
+                val_dataset = ParquetPatchDataset(
+                    arrow_dir=str(test_arrow), use_nopca=args.nopca)
+                print(f"Validation patches (arrow): {len(val_dataset)}")
+        else:
+            # Fallback: load from parquet with filtering
+            splits_path = args.splits_json
+            if splits_path is None:
+                from src.parquet_loader import download_splits_json
+                splits_path = "data/splits.json"
+                download_splits_json(output_path=splits_path)
 
-        val_dataset = None
-        if "seen_test" in splits:
-            val_mesh_ids = set(splits["seen_test"])
-            val_dataset = ParquetPatchDataset(
-                args.parquet_dir, use_nopca=args.nopca, split_mesh_ids=val_mesh_ids)
-            print(f"Validation patches (parquet): {len(val_dataset)}")
+            with open(splits_path) as f:
+                splits = json.load(f)
+
+            train_mesh_ids = set(splits["seen_train"])
+            train_dataset = ParquetPatchDataset(
+                parquet_dir=args.parquet_dir, use_nopca=args.nopca,
+                split_mesh_ids=train_mesh_ids)
+            print(f"Training patches (parquet): {len(train_dataset)}")
+
+            val_dataset = None
+            if "seen_test" in splits:
+                val_mesh_ids = set(splits["seen_test"])
+                val_dataset = ParquetPatchDataset(
+                    parquet_dir=args.parquet_dir, use_nopca=args.nopca,
+                    split_mesh_ids=val_mesh_ids)
+                print(f"Validation patches (parquet): {len(val_dataset)}")
     elif args.train_dirs:
         train_datasets = [PatchGraphDataset(d, use_nopca=args.nopca) for d in args.train_dirs]
         train_dataset = ConcatDataset(train_datasets)
