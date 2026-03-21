@@ -36,6 +36,10 @@ def main():
                         help="Parquet directory (alternative to --train_dirs)")
     parser.add_argument("--splits_json", type=str, default=None,
                         help="splits.json path (required with --parquet_dir)")
+    parser.add_argument("--feature_dir", type=str, default=None,
+                        help="Pre-computed mmap feature directory (fastest)")
+    parser.add_argument("--val_feature_dir", type=str, default=None,
+                        help="Pre-computed mmap feature directory for validation")
     parser.add_argument("--codebook_size", type=int, default=1024)
     parser.add_argument("--n_levels", type=int, default=3)
     parser.add_argument("--embed_dim", type=int, default=128)
@@ -49,11 +53,21 @@ def main():
     parser.add_argument("--nopca", action="store_true", help="Train on non-PCA-normalized vertices")
     parser.add_argument("--vq_method", choices=["simvq", "vanilla", "ema"], default="simvq",
                         help="VQ codebook method")
+    parser.add_argument("--num_workers", type=int, default=8,
+                        help="DataLoader num_workers")
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if args.parquet_dir:
+    if args.feature_dir:
+        from src.patch_dataset import MmapPatchDataset
+        train_dataset = MmapPatchDataset(args.feature_dir)
+        print(f"Training patches (mmap): {len(train_dataset)}")
+        val_dataset = None
+        if args.val_feature_dir:
+            val_dataset = MmapPatchDataset(args.val_feature_dir)
+            print(f"Validation patches (mmap): {len(val_dataset)}")
+    elif args.parquet_dir:
         from src.patch_dataset import ParquetPatchDataset
         # Check for pre-computed Arrow splits first
         arrow_base = args.parquet_dir.rstrip("/").replace("/data", "/splits")
@@ -142,6 +156,7 @@ def main():
         checkpoint_dir=args.checkpoint_dir,
         device=device,
         resume_checkpoint=ckpt_data,
+        num_workers=args.num_workers,
     )
 
     # Save training config

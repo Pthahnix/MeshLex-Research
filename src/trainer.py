@@ -27,6 +27,7 @@ class Trainer:
         encoder_warmup_epochs: int = 10,
         resume_checkpoint: dict = None,
         use_bf16: bool = True,
+        num_workers: int = 8,
     ):
         self.model = model.to(device)
         self.device = device
@@ -41,13 +42,14 @@ class Trainer:
 
         self.train_loader = DataLoader(
             train_dataset, batch_size=batch_size, shuffle=True,
-            num_workers=8, pin_memory=True, persistent_workers=True,
-            prefetch_factor=2,
+            num_workers=num_workers, pin_memory=True, persistent_workers=True,
+            prefetch_factor=4,
         )
+        val_workers = max(4, num_workers // 2)
         self.val_loader = (
             DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
-                       num_workers=4, pin_memory=True, persistent_workers=True,
-                       prefetch_factor=2)
+                       num_workers=val_workers, pin_memory=True, persistent_workers=True,
+                       prefetch_factor=4)
             if val_dataset else None
         )
 

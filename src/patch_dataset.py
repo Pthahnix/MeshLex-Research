@@ -356,3 +356,41 @@ class MeshSequenceDataset(Dataset):
         target_ids[:seq_len - 1] = seq[1:]
 
         return torch.tensor(input_ids, dtype=torch.long), torch.tensor(target_ids, dtype=torch.long)
+
+
+class MmapPatchDataset(Dataset):
+    """Ultra-fast dataset reading pre-computed features from memory-mapped numpy arrays.
+
+    Created by scripts/precompute_features.py. Returns PatchData objects compatible
+    with the PyG DataLoader and existing Trainer.
+    """
+
+    def __init__(self, feature_dir: str):
+        self.feature_dir = Path(feature_dir)
+        self._feats = np.load(str(self.feature_dir / "face_features.npy"), mmap_mode="r")
+        self._edges = np.load(str(self.feature_dir / "edge_index.npy"), mmap_mode="r")
+        self._verts = np.load(str(self.feature_dir / "gt_vertices.npy"), mmap_mode="r")
+        self._n_verts = np.load(str(self.feature_dir / "n_vertices.npy"), mmap_mode="r")
+        self._n_faces = np.load(str(self.feature_dir / "n_faces.npy"), mmap_mode="r")
+        self._n_edges = np.load(str(self.feature_dir / "n_edges.npy"), mmap_mode="r")
+
+    def __len__(self):
+        return len(self._n_verts)
+
+    def __getitem__(self, idx):
+        n_faces = int(self._n_faces[idx])
+        n_edges = int(self._n_edges[idx])
+
+        # Read pre-computed arrays (already padded)
+        x = torch.from_numpy(self._feats[idx, :n_faces].copy())
+        edge_index = torch.from_numpy(self._edges[idx, :, :n_edges].copy())
+        gt_vertices = torch.from_numpy(self._verts[idx].copy())
+        n_vertices = torch.tensor(int(self._n_verts[idx]), dtype=torch.long)
+
+        return PatchData(
+            x=x.float(),
+            edge_index=edge_index.long(),
+            gt_vertices=gt_vertices.float(),
+            n_vertices=n_vertices,
+            n_faces=torch.tensor(n_faces, dtype=torch.long),
+        )
