@@ -116,7 +116,7 @@ def encode_from_arrow(model, args, device, out):
     then read metadata (mesh_id, centroid, scale, principal_axes) from Arrow
     to group tokens into per-mesh sequence NPZ files.
     """
-    from src.patch_dataset import MmapPatchDataset
+    from src.patch_dataset import MmapPatchDataset, ChunkBatchIterator
     from datasets import load_from_disk
 
     # Step 1: Load Arrow dataset for metadata
@@ -125,34 +125,39 @@ def encode_from_arrow(model, args, device, out):
     N = len(ds)
     print(f"  {N} patches total")
 
-    # Step 2: Load mmap features for fast encoding
+    # Step 2: Load mmap features and encode using ChunkBatchIterator
     print(f"Loading mmap features from {args.feature_dir}...")
-    dataset = MmapPatchDataset(args.feature_dir)
-    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False,
-                        num_workers=8, pin_memory=True, persistent_workers=True,
-                        prefetch_factor=4)
+    chunk_size = getattr(args, 'chunk_size', 0) or 500_000
+    dataset = MmapPatchDataset(args.feature_dir, chunk_size=chunk_size)
+    n_chunks = (N + chunk_size - 1) // chunk_size
 
-    # Step 3: Encode all patches through VQ-VAE
-    print(f"Encoding {N} patches (batch_size={args.batch_size})...")
+    print(f"Encoding {N} patches (batch_size={args.batch_size}, {n_chunks} chunks)...")
     all_tokens = []
     t0 = time.time()
     done = 0
 
     with torch.no_grad(), torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=True):
-        for batch in loader:
-            batch = batch.to(device)
-            z = model.encoder(batch.x, batch.edge_index, batch.batch)
-            if args.mode == "rvq":
-                _, indices = model.rvq(z)
-            else:
-                _, indices = model.codebook(z)
-            all_tokens.append(indices.cpu().numpy())
-            done += len(batch.x) if hasattr(batch, 'x') and batch.x.dim() == 2 else batch.n_faces.shape[0]
-            if done % (args.batch_size * 50) < args.batch_size:
+        for ci in range(n_chunks):
+            dataset.load_chunk(ci)
+            loader = ChunkBatchIterator(dataset, batch_size=args.batch_size,
+                                        shuffle=False, device=device)
+            for batch in loader:
+                z = model.encoder(batch.x, batch.edge_index, batch.batch)
+                if args.mode == "rvq":
+                    _, indices = model.rvq(z)
+                else:
+                    _, indices = model.codebook(z)
+                all_tokens.append(indices.cpu().numpy())
+                done += batch.n_faces.shape[0]
+
+            if (ci + 1) % 5 == 0 or ci == n_chunks - 1:
                 elapsed = time.time() - t0
                 rate = done / elapsed if elapsed > 0 else 0
                 eta = (N - done) / rate if rate > 0 else 0
-                print(f"  Encoded {done}/{N} ({done/N*100:.1f}%) | {rate:.0f}/sec | ETA {eta/60:.1f}min")
+                print(f"  Chunk {ci+1}/{n_chunks}: {done}/{N} ({done/N*100:.1f}%) | "
+                      f"{rate:.0f}/sec | ETA {eta/60:.1f}min")
+            del loader
+            gc.collect()
 
     tokens = np.concatenate(all_tokens, axis=0)
     elapsed = time.time() - t0
