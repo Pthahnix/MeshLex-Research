@@ -122,7 +122,7 @@ results/                           # 实验结果 (committed)
 - **命名策略**：避开 "BPE for Mesh"（被 FreeMesh ICML 2025 占用），使用 "MeshLex"
 - **差异化定位**：vs MeshMosaic（我们是 codebook 选取，不是逐 face 生成）；vs FACE（我们是 per-patch，不是 per-face）
 
-## Current Status (2026-03-20)
+## Current Status (2026-03-21)
 
 ### v1 可行性验证 — COMPLETE (4/4 STRONG GO)
 
@@ -140,12 +140,13 @@ results/                           # 实验结果 (committed)
 | Phase 1 | RVQ 训练 | COMPLETE | 200 epochs, loss 0.177, util 100% |
 | Phase 3 | AR 训练 | COMPLETE (v2) | v1: loss 5.41 (87.3M params, 太大) → v2: loss 1.48, ppl 4.4 (20.4M params) |
 | Phase 4 | Generation Pipeline | COMPLETE | 40 meshes generated, surface recon via Ball Pivoting |
+| Phase D-1 | Objaverse Streaming | **COMPLETE** | 93 batches, 32,136 OK / 14,364 fail, 4,619,061 patches |
 
 **当前进行中:**
 
 | Phase | 内容 | 状态 | 备注 |
 |-------|------|------|------|
-| Phase D | 统一数据集 (Daft pipeline) | IN PROGRESS | Objaverse-LVIS 46K + ShapeNet 51K → HF Parquet |
+| Phase D-2 | ShapeNet Streaming | PENDING | 待启动 |
 
 **待完成:**
 
