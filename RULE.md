@@ -55,6 +55,16 @@ nvidia-smi     # GPU
 
 - 只保留最新 3 个 checkpoint，旧的立即删除
 
+### GPU 利用率最大化
+
+当有空闲 GPU 或 GPU 利用率长期 < 30% 时，必须采取以下措施：
+
+1. **多任务并行**：同一 GPU 可同时运行多个轻量训练任务（如多个 VQ-VAE 变体各占 ~4GB VRAM）。不同 GPU 运行不同实验变体。
+2. **Batch Size 调优**：调整 batch_size 使 VRAM 占用达到可用显存的 60-80%。单任务 VRAM 占用 < 30% 时，优先考虑多任务并行而非增大 batch_size（因小模型增大 batch 不提升吞吐）。
+3. **并行编码/推理**：编码（encode_sequences）、评估等非训练任务，可与训练同时运行在同一 GPU 上。
+4. **监控标准**：每次启动训练后 10 分钟内检查 `nvidia-smi`，若 GPU utilization < 20% 且 memory < 50%，考虑追加并行任务。
+5. **超参配置**：当 GPU 空间允许时，优先增大 hidden_dim / n_layers 提升模型容量（尤其 AR 模型），而非仅增大 batch_size。
+
 ### 崩溃预防
 
 - 训练脚本必须支持 `--resume`，OOM 后从上一个 checkpoint 继续，不得从头重跑
