@@ -57,6 +57,10 @@ def main():
                         help="DataLoader num_workers")
     parser.add_argument("--chunk_size", type=int, default=0,
                         help="Chunk size for mmap dataset (0=disabled, use when RAM is limited)")
+    parser.add_argument("--encoder_warmup", type=int, default=10,
+                        help="Encoder warmup epochs (recon only, then K-means init)")
+    parser.add_argument("--dead_code_interval", type=int, default=10,
+                        help="Dead code revival interval (epochs)")
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -160,6 +164,8 @@ def main():
         device=device,
         resume_checkpoint=ckpt_data,
         num_workers=args.num_workers,
+        encoder_warmup_epochs=args.encoder_warmup,
+        dead_code_interval=args.dead_code_interval,
     )
 
     # Save training config
