@@ -1,19 +1,19 @@
 # Dataset Pipeline Progress Report — ShapeNet Phase
 
-**Generated:** 2026-03-21 06:18 UTC
+**Generated:** 2026-03-21 06:33 UTC
 
 ## Overall Status
 - **Phase**: ShapeNet streaming (Phase D-2)
 - **Pipeline PID**: 223161 (running)
-- **Categories completed**: 14 / 55 (25%) — 12 OK, 2 errors
-- **Currently processing**: cabinet (02933112)
+- **Categories completed**: 18 / 55 (33%) — 16 OK, 2 errors
+- **Currently processing**: car (02958343) — 3514 models
 
 ## Stats
-- Meshes OK: 6,483
-- Meshes fail: 3,151
-- Success rate: 67.3%
-- Total patches: 1,204,789
-- Avg patches/mesh: 185.8
+- Meshes OK: 8,208
+- Meshes fail: 3,274
+- Success rate: 71.5%
+- Total patches: 1,408,059
+- Avg patches/mesh: 171.5
 
 ## Per-Category Breakdown
 | Category | Synset | OK | Fail | Patches |
@@ -32,18 +32,25 @@
 | bottle | 02876657 | 491 | 7 | 36,917 |
 | bowl | 02880940 | 182 | 4 | 11,709 |
 | bus | 02924116 | 404 | 535 | 115,134 |
+| cabinet | 02933112 | 1,467 | 104 | 173,482 |
+| camera | 02942699 | 99 | 14 | 15,777 |
+| can | 02946921 | 104 | 4 | 8,203 |
+| cap | 02954340 | 55 | 1 | 5,808 |
 
 ## Disk Usage
-- Used: 15GB / 80GB (19%)
-- Free: 66GB
+- Used: 41GB / 80GB (51%)
+- Free: 40GB
+- Note: car zip extraction is large (~27GB in /tmp/meshlex_shapenet/)
 
 ## Latest Log
 ```
-[cabinet] Writing sub-batch (61234 patches)...
+[cap] Done: 55 ok, 1 fail, 5808 patches
+[car] Downloaded + extracted in 158s
+[car] Found 3514 models
 ```
 
 ## Notes
 - 2 categories (bicycle, boat) returned 404 — zips not on HF ShapeNet repo.
-- bus had high fail rate (57%) similar to airplane — complex vehicle meshes.
-- Pipeline started at 04:35 UTC (~103 min elapsed).
+- Pipeline started at 04:35 UTC (~118 min elapsed).
+- car is a large category (3514 models), expect ~30 min to process.
 - Objaverse phase (D-1) completed earlier: 93 batches, 32,136 OK, 4,619,061 patches.
