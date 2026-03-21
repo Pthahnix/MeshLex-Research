@@ -1,19 +1,19 @@
 # Dataset Pipeline Progress Report — ShapeNet Phase
 
-**Generated:** 2026-03-21 08:03 UTC
+**Generated:** 2026-03-21 08:48 UTC
 
 ## Overall Status
 - **Phase**: ShapeNet streaming (Phase D-2)
 - **Pipeline PID**: 223161 (running)
-- **Categories completed**: 20 / 55 (36%) — 18 OK, 2 errors
-- **Currently processing**: chair (03001627) — 6778 models (largest category)
+- **Categories completed**: 28 / 55 (51%) — 26 OK, 2 errors
+- **Currently processing**: guitar (03467517)
 
 ## Stats
-- Meshes OK: 9,486
-- Meshes fail: 6,341
-- Success rate: 60.0%
-- Total patches: 1,783,888
-- Avg patches/mesh: 188.1
+- Meshes OK: 18,310
+- Meshes fail: 7,312
+- Success rate: 71.5%
+- Total patches: 2,908,970
+- Avg patches/mesh: 158.9
 
 ## Per-Category Breakdown
 | Category | Synset | OK | Fail | Patches |
@@ -38,22 +38,28 @@
 | cap | 02954340 | 55 | 1 | 5,808 |
 | car | 02958343 | 492 | 3,022 | 254,232 |
 | cellphone | 02992529 | 786 | 45 | 121,597 |
+| chair | 03001627 | 6,132 | 646 | 802,911 |
+| clock | 03046257 | 581 | 70 | 82,860 |
+| keyboard | 03085013 | 47 | 18 | 11,394 |
+| dishwasher | 03207941 | 80 | 13 | 8,245 |
+| display | 03211117 | 983 | 110 | 92,235 |
+| earphone | 03261776 | 61 | 12 | 11,107 |
+| faucet | 03325088 | 709 | 35 | 100,964 |
+| file_cabinet | 03337140 | 231 | 67 | 15,366 |
 
 ## Disk Usage
-- Used: 21GB / 80GB (27%)
-- Free: 60GB
+- Used: 14GB / 80GB (17%)
+- Free: 67GB
 
 ## Latest Log
 ```
-[chair] Downloaded + extracted in 59s
-[chair] Found 6778 models
-(sub-batches uploading to HF)
+[file_cabinet] Done: 231 ok, 67 fail, 15366 patches
+[guitar] Downloading category 03467517.zip...
 ```
 
 ## Timing
-- Pipeline started: 04:35 UTC (~3.5h elapsed)
-- Processing rate: ~80 meshes/min
-- Estimated remaining: ~5-6 hours (table 8509, chair 6778, sofa 3173, etc.)
+- Pipeline started: 04:35 UTC (~4.2h elapsed, 238 min CPU)
+- Processing rate: ~107 meshes/min (speeding up with smaller categories)
+- Remaining: ~27 categories, biggest are table(8509), sofa(3173), rifle(2373), loudspeaker(2382), lamp(2318)
 - 2 categories (bicycle, boat) 404 errors — zips not on HF
-- car had 86% fail rate (complex vehicle meshes)
 - Objaverse phase (D-1) completed: 32,136 OK, 4,619,061 patches
