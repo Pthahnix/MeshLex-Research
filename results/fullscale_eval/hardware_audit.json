@@ -1,0 +1,28 @@
+{
+  "gpu_count": 3,
+  "gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 5090",
+      "vram_gb": 33.7
+    },
+    {
+      "index": 1,
+      "name": "NVIDIA GeForce RTX 5090",
+      "vram_gb": 33.7
+    },
+    {
+      "index": 2,
+      "name": "NVIDIA GeForce RTX 5090",
+      "vram_gb": 33.7
+    }
+  ],
+  "ram_gb": 251.5,
+  "disk_root_total_gb": 817.1,
+  "disk_root_free_gb": 269.1,
+  "disk_data_total_gb": 7334.0,
+  "disk_data_free_gb": 4232.6,
+  "pytorch_version": "2.10.0+cu128",
+  "cuda_version": "12.8",
+  "go": true
+}
