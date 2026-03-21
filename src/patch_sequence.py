@@ -165,3 +165,99 @@ def compute_vocab_size(
     Layout: 3*n_pos_bins (xyz) + n_scale_bins + codebook_K
     """
     return 3 * n_pos_bins + n_scale_bins + codebook_K
+
+
+def patches_to_token_sequence_rot(
+    centroids,
+    scales,
+    rotations,
+    codebook_tokens,
+    n_pos_bins: int = 256,
+    n_scale_bins: int = 64,
+    n_rot_bins: int = 64,
+):
+    """Convert patch data into 11-token-per-patch flat sequence with quaternion rotation.
+
+    Token layout per patch (11 tokens):
+        pos_x  : [0, n_pos_bins)
+        pos_y  : [n_pos_bins, 2*n_pos_bins)
+        pos_z  : [2*n_pos_bins, 3*n_pos_bins)
+        scale  : [3*n_pos_bins, 3*n_pos_bins + n_scale_bins)
+        rot_qx : [off_rot, off_rot + n_rot_bins)
+        rot_qy : [off_rot + n_rot_bins, off_rot + 2*n_rot_bins)
+        rot_qz : [off_rot + 2*n_rot_bins, off_rot + 3*n_rot_bins)
+        rot_qw : [off_rot + 3*n_rot_bins, off_rot + 4*n_rot_bins)
+        cb_L1  : [off_code, off_code + K)
+        cb_L2  : [off_code, off_code + K)
+        cb_L3  : [off_code, off_code + K)
+    """
+    from src.rotation import quantize_rotation
+
+    if hasattr(centroids, 'numpy'):
+        centroids = centroids.numpy()
+    if hasattr(scales, 'numpy'):
+        scales = scales.numpy()
+    if hasattr(rotations, 'numpy'):
+        rotations = rotations.numpy()
+    if hasattr(codebook_tokens, 'numpy'):
+        codebook_tokens = codebook_tokens.numpy()
+
+    centroids = np.asarray(centroids, dtype=np.float32)
+    scales = np.asarray(scales, dtype=np.float32)
+    rotations = np.asarray(rotations, dtype=np.float32)
+    codebook_tokens = np.asarray(codebook_tokens, dtype=np.int64)
+
+    M = centroids.shape[0]
+    off_y = n_pos_bins
+    off_z = 2 * n_pos_bins
+    off_scale = 3 * n_pos_bins
+    off_rot = off_scale + n_scale_bins
+    off_code = off_rot + 4 * n_rot_bins
+
+    # Quantize positions to [0, 1]
+    pos_min = centroids.min(axis=0)
+    pos_range = np.maximum(centroids.max(axis=0) - pos_min, 1e-8)
+    pos_norm = (centroids - pos_min) / pos_range
+
+    # Quantize scales to [0, 1]
+    s_min, s_max = scales.min(), scales.max()
+    s_range = max(float(s_max - s_min), 1e-8)
+    s_norm = (scales - s_min) / s_range
+
+    # Morton sort
+    morton = morton_code_3d(torch.tensor(centroids, dtype=torch.float32), n_pos_bins)
+    order = morton.argsort().numpy()
+
+    sequence = []
+    for idx in order:
+        px = int(pos_norm[idx, 0] * (n_pos_bins - 1))
+        py = int(pos_norm[idx, 1] * (n_pos_bins - 1)) + off_y
+        pz = int(pos_norm[idx, 2] * (n_pos_bins - 1)) + off_z
+        sc = int(s_norm[idx] * (n_scale_bins - 1)) + off_scale
+
+        rot_bins = quantize_rotation(rotations[idx], n_rot_bins)
+        qx = int(rot_bins[0]) + off_rot
+        qy = int(rot_bins[1]) + off_rot + n_rot_bins
+        qz = int(rot_bins[2]) + off_rot + 2 * n_rot_bins
+        qw = int(rot_bins[3]) + off_rot + 3 * n_rot_bins
+
+        c1 = int(codebook_tokens[idx, 0]) + off_code
+        c2 = int(codebook_tokens[idx, 1]) + off_code
+        c3 = int(codebook_tokens[idx, 2]) + off_code
+
+        sequence.extend([px, py, pz, sc, qx, qy, qz, qw, c1, c2, c3])
+
+    return torch.tensor(sequence, dtype=torch.int64)
+
+
+def compute_vocab_size_rot(
+    n_pos_bins: int = 256,
+    n_scale_bins: int = 64,
+    n_rot_bins: int = 64,
+    codebook_K: int = 1024,
+) -> int:
+    """Total vocabulary size for 11-token rotation format.
+
+    Layout: 3*n_pos_bins + n_scale_bins + 4*n_rot_bins + codebook_K
+    """
+    return 3 * n_pos_bins + n_scale_bins + 4 * n_rot_bins + codebook_K

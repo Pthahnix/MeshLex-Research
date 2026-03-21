@@ -73,3 +73,26 @@ def test_patches_to_sequence_rvq():
     )
     assert seq.shape == (M * 7,)
     assert (seq >= 0).all()
+
+
+def test_patches_to_sequence_rvq_rot():
+    """RVQ+rotation mode: 10 patches -> 10*11 = 110 tokens."""
+    from src.patch_sequence import patches_to_token_sequence_rot
+    M = 10
+    centroids = torch.randn(M, 3)
+    scales = torch.rand(M) + 0.1
+    codebook_tokens = torch.randint(0, 1024, (M, 3))
+    rotations = torch.eye(3).unsqueeze(0).expand(M, -1, -1)
+    seq = patches_to_token_sequence_rot(
+        centroids, scales, rotations, codebook_tokens,
+        n_pos_bins=256, n_scale_bins=64, n_rot_bins=64,
+    )
+    assert seq.shape == (M * 11,)
+    assert (seq >= 0).all()
+    assert seq.max() < 2112
+
+
+def test_compute_vocab_size_rot():
+    """Vocab size with rotation: 3*256 + 64 + 4*64 + 1024 = 2112."""
+    from src.patch_sequence import compute_vocab_size_rot
+    assert compute_vocab_size_rot() == 2112
