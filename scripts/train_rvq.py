@@ -61,6 +61,8 @@ def main():
                         help="Encoder warmup epochs (recon only, then K-means init)")
     parser.add_argument("--dead_code_interval", type=int, default=10,
                         help="Dead code revival interval (epochs)")
+    parser.add_argument("--stop_flag_file", type=str, default=None,
+                        help="Path to stop-flag file; training exits gracefully after current epoch if file exists")
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -166,6 +168,7 @@ def main():
         num_workers=args.num_workers,
         encoder_warmup_epochs=args.encoder_warmup,
         dead_code_interval=args.dead_code_interval,
+        stop_flag_file=args.stop_flag_file,
     )
 
     # Save training config

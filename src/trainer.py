@@ -28,6 +28,7 @@ class Trainer:
         resume_checkpoint: dict = None,
         use_bf16: bool = True,
         num_workers: int = 8,
+        stop_flag_file: str = None,
     ):
         self.model = model.to(device)
         self.device = device
@@ -41,6 +42,7 @@ class Trainer:
         self.use_bf16 = use_bf16 and device != "cpu"
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.stop_flag_file = Path(stop_flag_file) if stop_flag_file else None
 
         from src.patch_dataset import MmapPatchDataset
         self._chunked = isinstance(train_dataset, MmapPatchDataset) and train_dataset._chunk_size > 0
@@ -370,6 +372,13 @@ class Trainer:
 
                 if util < 0.10 and epoch >= self.encoder_warmup_epochs:
                     print(f"WARNING: Codebook utilization {util:.1%} < 10% at epoch {epoch}")
+
+            # Check stop flag (graceful yield for GPU sharing)
+            if self.stop_flag_file and self.stop_flag_file.exists():
+                print(f"Stop flag detected ({self.stop_flag_file}), saving checkpoint and exiting...")
+                self.save_checkpoint(epoch)
+                self.save_history()
+                return
 
         # Final checkpoint
         self.save_checkpoint(self.epochs - 1, tag="final")
