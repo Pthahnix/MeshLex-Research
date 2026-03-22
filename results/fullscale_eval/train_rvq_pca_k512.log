@@ -29,3 +29,9 @@ Epoch 002 | loss 0.3002 | recon 0.2485 | commit 0.0259 | embed 0.0259 | util 100
 Epoch 003 | loss 0.2865 | recon 0.2282 | commit 0.0291 | embed 0.0291 | util 99.4% | lr 8.02e-05 | 9227.8s
     chunk 10/43 done, loss 0.2800
     chunk 20/43 done, loss 0.2814
+    chunk 30/43 done, loss 0.2794
+    chunk 40/43 done, loss 0.2791
+Epoch 004 | loss 0.2801 | recon 0.2178 | commit 0.0311 | embed 0.0311 | util 99.2% | lr 1.00e-04 | 10253.6s
+    chunk 10/43 done, loss 0.2782
+    chunk 20/43 done, loss 0.2721
+    chunk 30/43 done, loss 0.2738
