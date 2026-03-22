@@ -34,7 +34,7 @@ JOBS = [
         "name": "noPCA K=1024",
         "exp_name": "rvq_full_nopca",
         "ckpt_dir": CKPT_BASE / "rvq_full_nopca",
-        "encode_gpu": "1",
+        "encode_gpu": "2",
         "encode_cfg": "nopca",
     },
     {
