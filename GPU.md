@@ -16,16 +16,17 @@
 ## 2. 总则
 
 - 所有 GPU 任务（训练、编码、生成、分析）均适用本指南
-- **GPU 0 永不使用**，仅使用 GPU 1 / GPU 2
+- **共享服务器**：GPU 0/1/2 均可能有其他用户在使用。启动前必须 `nvidia-smi` 确认目标卡空闲（VRAM 和利用率均低）
 - 默认单卡，除非模型大到单卡放不下才考虑双卡
 - 目标：**VRAM 利用率 ≥ 80%，GPU 算力利用率 ≥ 60%**
+- 若某卡被他人长期占用，使用其他空闲卡，**不要抢占他人资源**
 
 ## 3. 启动前 Checklist
 
 每次启动 GPU 任务前，必须按顺序执行：
 
 1. `nvidia-smi` 确认目标卡空闲
-2. 选定 `CUDA_VISIBLE_DEVICES=1` 或 `=2`
+2. 选定 `CUDA_VISIBLE_DEVICES=<N>`（0、1 或 2，哪个空闲用哪个）
 3. 设置进程名 `setproctitle("Pthahnix-<Task>")`
 4. 确认启用 bf16 混合精度
 5. 用试探协议（见 §5）确定最大 batch size
@@ -96,9 +97,9 @@ DataLoader(
 
 ## 7. 多任务并发
 
-当 GPU 1 和 GPU 2 都空闲，且有 **≥ 2 个独立任务**排队时：
+当有 **≥ 2 个独立任务**排队，且有多张空闲 GPU 时：
 
-- 两个任务分别用 tmux session 启动在 GPU 1 和 GPU 2
+- 两个任务分别用 tmux session 启动在不同 GPU
 - 命名：`tmux new -s meshlex-gpu1` / `tmux new -s meshlex-gpu2`
 - 每个任务独立设置 `CUDA_VISIBLE_DEVICES`
 - **内存约束**：两个任务的 DataLoader 共享系统内存，总 `num_workers ≤ 16`
@@ -130,3 +131,105 @@ nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv
 
 - 每 10 epoch 记录一次 VRAM 和 GPU 利用率到 `training_history.json`
 - 训练结束后在报告中注明峰值 VRAM 和平均 GPU 利用率
+
+## 9. 断点续训（Resume）
+
+**所有训练脚本均支持 `--resume`**，OOM 或中断后从最近 checkpoint 恢复，**禁止从头重跑**。
+
+### 9.1 Checkpoint 保存规范
+
+| 脚本 | 保存频率 | 文件命名 |
+|------|---------|---------|
+| `train_rvq.py` | 每 3 epochs | `checkpoint_epoch{N:03d}.pt` |
+| `train_ar.py` | 每 10 epochs | `checkpoint_epoch{N:03d}.pt` |
+| `train_mdlm.py` | 每 10 epochs | `checkpoint_epoch{N+1}.pt` |
+
+磁盘管理：**只保留最新 3 个 checkpoint**，旧的自动删除（各脚本已内置）。
+
+### 9.2 Resume 方法
+
+```bash
+# 找最新 checkpoint
+latest=$(ls -t /data/pthahnix/MeshLex-Research/checkpoints/<exp>/checkpoint_epoch*.pt | head -1)
+echo "Resuming from: $latest"
+
+# 恢复训练（以 train_ar.py 为例）
+CUDA_VISIBLE_DEVICES=1 nohup python3 scripts/train_ar.py \
+    --sequence_dir /data/.../sequences/rvq_full_pca \
+    --checkpoint_dir /data/.../checkpoints/ar_full_pca \
+    --resume "$latest" \
+    --stop_flag_file /tmp/stop_gpu1_ar_pca \
+    ... \
+    >> results/fullscale_eval/train_ar_pca.log 2>&1 &
+```
+
+## 10. GPU 让出机制（共享服务器礼让）
+
+本服务器为多人共享，**当他人需要使用某块 GPU 时，我们的任务应主动让出**。
+
+### 10.1 工作原理
+
+所有训练脚本支持 `--stop_flag_file <path>` 参数。训练循环在每个 epoch 结束后检查该文件是否存在：
+- **存在** → 保存当前 epoch checkpoint + training_history.json，然后优雅退出
+- **不存在** → 继续训练
+
+### 10.2 启动时必须指定 stop_flag_file
+
+**每次启动训练任务时，必须加上 `--stop_flag_file`**，按 GPU 编号 + job 名命名：
+
+```bash
+# GPU 0 上的任务
+--stop_flag_file /tmp/stop_gpu0_<job_name>
+
+# GPU 1 上的任务
+--stop_flag_file /tmp/stop_gpu1_<job_name>
+
+# GPU 2 上的任务
+--stop_flag_file /tmp/stop_gpu2_<job_name>
+```
+
+示例：
+
+```bash
+CUDA_VISIBLE_DEVICES=1 nohup python3 scripts/train_ar.py \
+    --sequence_dir /data/.../sequences/rvq_full_pca \
+    --checkpoint_dir /data/.../checkpoints/ar_full_pca \
+    --stop_flag_file /tmp/stop_gpu1_ar_pca \
+    --epochs 200 ... \
+    >> results/fullscale_eval/train_ar_pca.log 2>&1 &
+```
+
+### 10.3 让出操作
+
+```bash
+# 创建 stop flag，训练在当前 epoch 结束后自动保存并退出
+touch /tmp/stop_gpu1_ar_pca
+
+# 观察日志，出现 "Stop flag detected" 表示已安全退出
+tail -f results/fullscale_eval/train_ar_pca.log
+```
+
+### 10.4 恢复操作
+
+```bash
+# 1. 删除 stop flag
+rm -f /tmp/stop_gpu1_ar_pca
+
+# 2. 找最新 checkpoint
+latest=$(ls -t /data/pthahnix/MeshLex-Research/checkpoints/ar_full_pca/checkpoint_epoch*.pt | head -1)
+
+# 3. 恢复训练
+CUDA_VISIBLE_DEVICES=1 nohup python3 scripts/train_ar.py \
+    --resume "$latest" \
+    --stop_flag_file /tmp/stop_gpu1_ar_pca \
+    ... \
+    >> results/fullscale_eval/train_ar_pca.log 2>&1 &
+```
+
+### 10.5 支持 stop_flag_file 的脚本
+
+| 脚本 | 触发位置 |
+|------|---------|
+| `scripts/train_rvq.py` | 每 epoch 末尾（via `src/trainer.py`） |
+| `scripts/train_ar.py` | 每 epoch 末尾（`gc.collect()` 之后） |
+| `scripts/train_mdlm.py` | 每 epoch 末尾（`cuda.empty_cache()` 之后） |
